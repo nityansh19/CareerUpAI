@@ -1,5 +1,6 @@
 import Login from "./auth/Login";
 import Register from "./auth/Register";
+import Dashboard from "./dashboard/Dashboard";
 
 function App() {
   // Show Login page
@@ -12,6 +13,11 @@ function App() {
     return <Register />;
   }
 
+  // Show Dashboard
+  if (window.location.pathname === "/dashboard") {
+    return <Dashboard />;
+  }
+
   // Show Landing Page
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -21,7 +27,7 @@ function App() {
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
 
           <div className="text-2xl font-extrabold">
-            CareerForge<span className="text-indigo-600">-AI</span>
+            CareerUp <span className="text-indigo-600">AI</span>
           </div>
 
           <div className="flex items-center gap-6">
@@ -82,7 +88,7 @@ function App() {
             </h1>
 
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
-              CareerForge-AI helps you discover the right career path,
+              CareerUp AI helps you discover the right career path,
               identify your skill gaps, improve your resume, and get
               personalized AI-powered career guidance.
             </p>
@@ -373,7 +379,7 @@ function App() {
         <div className="mx-auto max-w-7xl">
 
           <div className="text-2xl font-extrabold">
-            CareerForge<span className="text-indigo-400">-AI</span>
+            CareerUp <span className="text-indigo-400">AI</span>
           </div>
 
           <p className="mt-2 text-slate-400">

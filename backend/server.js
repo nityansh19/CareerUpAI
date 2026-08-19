@@ -16,9 +16,9 @@ app.use(express.json());
 app.use("/api/users", userRoutes);
 
 app.get("/", (req, res) => {
-  res.send("CareerForge AI Backend is Running!");
+  res.send("CareerUp AI Backend is Running!");
 });
 
 app.listen(PORT, () => {
-  console.log(`CareerForge AI Backend running on http://localhost:${PORT}`);
+  console.log(`CareerUp AI Backend running on http://localhost:${PORT}`);
 });

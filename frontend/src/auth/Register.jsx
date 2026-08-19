@@ -52,7 +52,8 @@ function Register() {
     <div className="auth-page">
       <div className="auth-card">
         <h1>Create Account</h1>
-        <p>Start your career journey with CareerForge-AI.</p>
+
+        <p>Start your career journey with CareerUp AI.</p>
 
         <form onSubmit={handleSubmit}>
           <input
