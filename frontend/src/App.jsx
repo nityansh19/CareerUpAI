@@ -1577,8 +1577,4 @@ function App() {
   );
 }
 
-<<<<<<< Updated upstream
 export default App;
-=======
-export default App;
->>>>>>> Stashed changes
