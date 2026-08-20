@@ -35,6 +35,21 @@ const userSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+
+    careerGoal: {
+      type: String,
+      default: "",
+    },
+
+    cvFile: {
+      type: String,
+      default: "",
+    },
+
+    cvOriginalName: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,
