@@ -1,1 +1,1 @@
-# Aurea-Path
+# CareerUp AI
