@@ -4,6 +4,7 @@ import WebGLExperience from "./WebGLExperience";
 import ProductionCopy from "./ProductionCopy";
 import { PublicPage } from "./PublicPages";
 import ResumeIntelligence from "./ResumeIntelligence";
+import CareerIntelligence from "./CareerIntelligence";
 import Login from "./auth/Login";
 import Register from "./auth/Register";
 import Dashboard from "./Dashboard/Dashboard";
@@ -23,6 +24,11 @@ function ResumeRoute() {
   return hasUser ? <ResumeIntelligence /> : <PublicPage type="resume" />;
 }
 
+function CareerIntelligenceRoute() {
+  const hasUser = Boolean(localStorage.getItem("user"));
+  return hasUser ? <CareerIntelligence /> : <PublicPage type="intelligence" />;
+}
+
 export default function App2() {
   return (
     <BrowserRouter>
@@ -30,7 +36,7 @@ export default function App2() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/product" element={<PublicPage type="product" />} />
         <Route path="/resume-intelligence" element={<ResumeRoute />} />
-        <Route path="/career-intelligence" element={<PublicPage type="intelligence" />} />
+        <Route path="/career-intelligence" element={<CareerIntelligenceRoute />} />
         <Route path="/roadmaps" element={<PublicPage type="roadmaps" />} />
         <Route path="/pricing" element={<PublicPage type="pricing" />} />
         <Route path="/about" element={<PublicPage type="about" />} />
