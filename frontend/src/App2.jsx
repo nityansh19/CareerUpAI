@@ -1,14 +1,24 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Home3D from "./Home3D";
+import WebGLExperience from "./WebGLExperience";
 import Login from "./auth/Login";
 import Register from "./auth/Register";
 import Dashboard from "./Dashboard/Dashboard";
+
+function LandingPage() {
+  return (
+    <div className="relative isolate">
+      <WebGLExperience />
+      <Home3D />
+    </div>
+  );
+}
 
 export default function App2() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home3D />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
