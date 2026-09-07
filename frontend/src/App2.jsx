@@ -1,13 +1,14 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Home3D from "./Home3D";
 import WebGLExperience from "./WebGLExperience";
 import ProductionCopy from "./ProductionCopy";
 import { PublicPage } from "./PublicPages";
 import ResumeIntelligence from "./ResumeIntelligence";
 import CareerIntelligence from "./CareerIntelligence";
-import Login from "./auth/Login";
-import Register from "./auth/Register";
+import LoginLocal from "./auth/LoginLocal";
+import RegisterLocal from "./auth/RegisterLocal";
 import Dashboard from "./Dashboard/Dashboard";
+import { getStoredUser } from "./auth/session";
 
 function LandingPage() {
   return (
@@ -19,14 +20,20 @@ function LandingPage() {
   );
 }
 
+function ProtectedRoute({ children }) {
+  return getStoredUser() ? children : <Navigate to="/login" replace />;
+}
+
+function GuestOnlyRoute({ children }) {
+  return getStoredUser() ? <Navigate to="/dashboard" replace /> : children;
+}
+
 function ResumeRoute() {
-  const hasUser = Boolean(localStorage.getItem("user"));
-  return hasUser ? <ResumeIntelligence /> : <PublicPage type="resume" />;
+  return getStoredUser() ? <ResumeIntelligence /> : <PublicPage type="resume" />;
 }
 
 function CareerIntelligenceRoute() {
-  const hasUser = Boolean(localStorage.getItem("user"));
-  return hasUser ? <CareerIntelligence /> : <PublicPage type="intelligence" />;
+  return getStoredUser() ? <CareerIntelligence /> : <PublicPage type="intelligence" />;
 }
 
 export default function App2() {
@@ -40,9 +47,10 @@ export default function App2() {
         <Route path="/roadmaps" element={<PublicPage type="roadmaps" />} />
         <Route path="/pricing" element={<PublicPage type="pricing" />} />
         <Route path="/about" element={<PublicPage type="about" />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/login" element={<GuestOnlyRoute><LoginLocal /></GuestOnlyRoute>} />
+        <Route path="/register" element={<GuestOnlyRoute><RegisterLocal /></GuestOnlyRoute>} />
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
