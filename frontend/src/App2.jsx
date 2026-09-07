@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Home3D from "./Home3D";
 import WebGLExperience from "./WebGLExperience";
+import ProductionCopy from "./ProductionCopy";
 import Login from "./auth/Login";
 import Register from "./auth/Register";
 import Dashboard from "./Dashboard/Dashboard";
@@ -8,6 +9,7 @@ import Dashboard from "./Dashboard/Dashboard";
 function LandingPage() {
   return (
     <div className="relative isolate">
+      <ProductionCopy />
       <WebGLExperience />
       <Home3D />
     </div>
