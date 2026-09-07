@@ -17,6 +17,29 @@ const resumeAnalysisSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const careerMatchSchema = new mongoose.Schema(
+  {
+    role: { type: String, default: "" },
+    readinessScore: { type: Number, default: 0 },
+    matchedSkills: { type: [String], default: [] },
+    missingSkills: { type: [String], default: [] },
+    whyFit: { type: [String], default: [] },
+    nextActions: { type: [String], default: [] },
+  },
+  { _id: false }
+);
+
+const careerIntelligenceSchema = new mongoose.Schema(
+  {
+    targetRole: { type: String, default: "" },
+    primaryRole: { type: String, default: "" },
+    primaryReadiness: { type: Number, default: 0 },
+    matches: { type: [careerMatchSchema], default: [] },
+    generatedAt: { type: Date },
+  },
+  { _id: false }
+);
+
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -70,6 +93,11 @@ const userSchema = new mongoose.Schema(
 
     resumeAnalysis: {
       type: resumeAnalysisSchema,
+      default: undefined,
+    },
+
+    careerIntelligence: {
+      type: careerIntelligenceSchema,
       default: undefined,
     },
   },
