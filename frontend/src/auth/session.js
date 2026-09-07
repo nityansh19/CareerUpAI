@@ -5,12 +5,14 @@ export function getStoredUser() {
   try {
     const raw = localStorage.getItem(SESSION_KEY) || localStorage.getItem(LEGACY_SESSION_KEY);
     if (!raw) return null;
+
     const user = JSON.parse(raw);
     if (!user?.id || !user?.email) return null;
 
-    // Migrate older sessions automatically.
-    localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-    localStorage.removeItem(LEGACY_SESSION_KEY);
+    // Keep both keys in sync until every existing module uses the new helper.
+    const serialized = JSON.stringify(user);
+    localStorage.setItem(SESSION_KEY, serialized);
+    localStorage.setItem(LEGACY_SESSION_KEY, serialized);
     return user;
   } catch {
     clearStoredUser();
@@ -20,8 +22,9 @@ export function getStoredUser() {
 
 export function storeUser(user) {
   if (!user?.id || !user?.email) return;
-  localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-  localStorage.removeItem(LEGACY_SESSION_KEY);
+  const serialized = JSON.stringify(user);
+  localStorage.setItem(SESSION_KEY, serialized);
+  localStorage.setItem(LEGACY_SESSION_KEY, serialized);
 }
 
 export function updateStoredUser(patch) {
