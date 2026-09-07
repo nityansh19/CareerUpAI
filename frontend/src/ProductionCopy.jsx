@@ -76,6 +76,38 @@ export default function ProductionCopy() {
         if (!original || !COPY_REPLACEMENTS.has(original)) return;
         textNode.nodeValue = textNode.nodeValue.replace(original, COPY_REPLACEMENTS.get(original));
       });
+
+      const desktopNav = document.querySelector("header nav");
+      if (desktopNav) {
+        const anchors = [...desktopNav.querySelectorAll("a")];
+        const routes = new Map([
+          ["Product", "/product"],
+          ["Intelligence", "/career-intelligence"],
+          ["How it works", "/roadmaps"],
+        ]);
+
+        anchors.forEach((anchor) => {
+          const label = anchor.textContent?.trim();
+          if (routes.has(label)) anchor.setAttribute("href", routes.get(label));
+        });
+
+        if (!desktopNav.querySelector('[data-careerup-page="pricing"]')) {
+          const login = anchors.find((anchor) => anchor.textContent?.trim() === "Login");
+          const pricing = document.createElement("a");
+          pricing.href = "/pricing";
+          pricing.textContent = "Pricing";
+          pricing.dataset.careerupPage = "pricing";
+          pricing.className = "text-sm text-white/45 transition hover:text-white";
+          desktopNav.insertBefore(pricing, login || null);
+
+          const about = document.createElement("a");
+          about.href = "/about";
+          about.textContent = "About";
+          about.dataset.careerupPage = "about";
+          about.className = "text-sm text-white/45 transition hover:text-white";
+          desktopNav.insertBefore(about, login || null);
+        }
+      }
     };
 
     applyCopy();
