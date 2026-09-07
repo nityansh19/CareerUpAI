@@ -3,6 +3,7 @@ import Home3D from "./Home3D";
 import WebGLExperience from "./WebGLExperience";
 import ProductionCopy from "./ProductionCopy";
 import { PublicPage } from "./PublicPages";
+import ResumeIntelligence from "./ResumeIntelligence";
 import Login from "./auth/Login";
 import Register from "./auth/Register";
 import Dashboard from "./Dashboard/Dashboard";
@@ -17,13 +18,18 @@ function LandingPage() {
   );
 }
 
+function ResumeRoute() {
+  const hasUser = Boolean(localStorage.getItem("user"));
+  return hasUser ? <ResumeIntelligence /> : <PublicPage type="resume" />;
+}
+
 export default function App2() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/product" element={<PublicPage type="product" />} />
-        <Route path="/resume-intelligence" element={<PublicPage type="resume" />} />
+        <Route path="/resume-intelligence" element={<ResumeRoute />} />
         <Route path="/career-intelligence" element={<PublicPage type="intelligence" />} />
         <Route path="/roadmaps" element={<PublicPage type="roadmaps" />} />
         <Route path="/pricing" element={<PublicPage type="pricing" />} />
