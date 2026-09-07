@@ -9,6 +9,7 @@ import LoginLocal from "./auth/LoginLocal";
 import RegisterLocal from "./auth/RegisterLocal";
 import Dashboard from "./Dashboard/Dashboard";
 import { getStoredUser } from "./auth/session";
+import PerformanceStyles from "./performance/PerformanceStyles";
 
 function LandingPage() {
   return (
@@ -39,6 +40,7 @@ function CareerIntelligenceRoute() {
 export default function App2() {
   return (
     <BrowserRouter>
+      <PerformanceStyles />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/product" element={<PublicPage type="product" />} />
