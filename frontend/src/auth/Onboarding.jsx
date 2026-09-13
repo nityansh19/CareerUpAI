@@ -69,12 +69,13 @@ export default function Onboarding() {
     setStep((current) => Math.min(current + 1, 2));
   };
 
-  const finish = async () => {
+  const finish = async (skipResume = false) => {
     if (!user?.id) {
       setMessage("Your session is missing. Please sign in again.");
       return;
     }
 
+    const resumeToUpload = skipResume ? null : resume;
     setSaving(true);
     setMessage("");
     try {
@@ -89,14 +90,14 @@ export default function Onboarding() {
       let finalUser = data.user;
       storeUser(finalUser);
 
-      if (resume) {
+      if (resumeToUpload) {
         const uploadBody = new FormData();
-        uploadBody.append("cv", resume);
+        uploadBody.append("cv", resumeToUpload);
         const uploadResponse = await fetch(apiUrl(`/api/users/upload-cv/${user.id}`), { method: "POST", body: uploadBody });
         const uploadData = await uploadResponse.json();
         if (!uploadResponse.ok) throw new Error(uploadData.message || "Your profile was saved, but the resume upload failed.");
-        finalUser = uploadData.user || { ...finalUser, cvOriginalName: uploadData.cv?.originalName || resume.name, cvFile: uploadData.cv?.fileName };
-        localStorage.setItem("careerup_cv_name", uploadData.cv?.originalName || resume.name);
+        finalUser = uploadData.user || { ...finalUser, cvOriginalName: uploadData.cv?.originalName || resumeToUpload.name, cvFile: uploadData.cv?.fileName };
+        localStorage.setItem("careerup_cv_name", uploadData.cv?.originalName || resumeToUpload.name);
         storeUser(finalUser);
       }
 
@@ -135,7 +136,7 @@ export default function Onboarding() {
             <div className="mt-5 grid grid-cols-3 gap-2 lg:grid-cols-1">
               {["Direction", "Strengths", "Resume"].map((label, index) => (
                 <button key={label} type="button" onClick={() => index < step && setStep(index)} className={`onboarding-step rounded-2xl border px-3 py-3 text-left ${index === step ? "is-active" : index < step ? "border-[#76d7c4]/12 bg-[#76d7c4]/[.035] text-white/55" : "border-white/[.055] bg-white/[.018] text-white/22"}`}>
-                  <div className="flex items-center gap-2"><span className="flex h-6 w-6 items-center justify-center rounded-lg border border-current/15 text-[9px]">{index < step ? <Icon name="check" size={12} /> : `0${index + 1}`}</span><span className="text-[11px] font-medium">{label}</span></div>
+                  <div className="flex items-center gap-2"><span className="flex h-6 w-6 items-center justify-center rounded-lg border border-white/10 text-[9px]">{index < step ? <Icon name="check" size={12} /> : `0${index + 1}`}</span><span className="text-[11px] font-medium">{label}</span></div>
                 </button>
               ))}
             </div>
@@ -195,7 +196,7 @@ export default function Onboarding() {
 
             <div className="mt-10 flex flex-col-reverse gap-3 border-t border-white/[.055] pt-6 sm:flex-row sm:items-center sm:justify-between">
               <button type="button" onClick={() => step === 0 ? navigate("/") : setStep((current) => current - 1)} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/[.075] px-5 py-3 text-sm text-white/42 transition hover:border-white/[.13] hover:text-white"><Icon name="back" size={16} />{step === 0 ? "Back to website" : "Back"}</button>
-              {step < 2 ? <button type="button" onClick={next} className="auth-primary inline-flex items-center justify-center gap-2 rounded-2xl bg-[#f0d481] px-6 py-3 text-sm font-semibold text-[#11131a] transition hover:-translate-y-0.5 hover:bg-[#f5dc92]"><span className="relative z-10 flex items-center gap-2">Continue <Icon name="arrow" size={16} /></span></button> : <div className="flex flex-col gap-2 sm:flex-row"><button type="button" disabled={saving} onClick={() => { setResume(null); finish(); }} className="rounded-2xl border border-white/[.075] px-5 py-3 text-sm text-white/42 transition hover:text-white disabled:opacity-40">Skip resume</button><button type="button" disabled={saving} onClick={finish} className="auth-primary rounded-2xl bg-[#f0d481] px-6 py-3 text-sm font-semibold text-[#11131a] transition hover:-translate-y-0.5 hover:bg-[#f5dc92] disabled:opacity-50"><span className="relative z-10">{saving ? "Building workspace…" : resume ? "Save & enter CareerUp" : "Enter CareerUp"}</span></button></div>}
+              {step < 2 ? <button type="button" onClick={next} className="auth-primary inline-flex items-center justify-center gap-2 rounded-2xl bg-[#f0d481] px-6 py-3 text-sm font-semibold text-[#11131a] transition hover:-translate-y-0.5 hover:bg-[#f5dc92]"><span className="relative z-10 flex items-center gap-2">Continue <Icon name="arrow" size={16} /></span></button> : <div className="flex flex-col gap-2 sm:flex-row"><button type="button" disabled={saving} onClick={() => finish(true)} className="rounded-2xl border border-white/[.075] px-5 py-3 text-sm text-white/42 transition hover:text-white disabled:opacity-40">Skip resume</button><button type="button" disabled={saving} onClick={() => finish(false)} className="auth-primary rounded-2xl bg-[#f0d481] px-6 py-3 text-sm font-semibold text-[#11131a] transition hover:-translate-y-0.5 hover:bg-[#f5dc92] disabled:opacity-50"><span className="relative z-10">{saving ? "Building workspace…" : resume ? "Save & enter CareerUp" : "Enter CareerUp"}</span></button></div>}
             </div>
           </main>
         </div>
