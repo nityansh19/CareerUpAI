@@ -96,12 +96,14 @@ router.put("/profile/:id", async (req, res) => {
     const user = await User.findByIdAndUpdate(
       id,
       {
-        name: fullName,
-        education,
-        skills: skills.split(",").map((skill) => skill.trim()).filter(Boolean),
-        careerInterests: interests.split(",").map((interest) => interest.trim()).filter(Boolean),
-        careerGoal,
-        careerIntelligence: undefined,
+        $set: {
+          name: fullName,
+          education,
+          skills: skills.split(",").map((skill) => skill.trim()).filter(Boolean),
+          careerInterests: interests.split(",").map((interest) => interest.trim()).filter(Boolean),
+          careerGoal,
+        },
+        $unset: { careerIntelligence: 1 },
       },
       { new: true, runValidators: true }
     );
@@ -123,10 +125,8 @@ router.post("/upload-cv/:id", upload.single("cv"), async (req, res) => {
     const user = await User.findByIdAndUpdate(
       id,
       {
-        cvFile: req.file.filename,
-        cvOriginalName: req.file.originalname,
-        resumeAnalysis: undefined,
-        careerIntelligence: undefined,
+        $set: { cvFile: req.file.filename, cvOriginalName: req.file.originalname },
+        $unset: { resumeAnalysis: 1, careerIntelligence: 1 },
       },
       { new: true }
     );
