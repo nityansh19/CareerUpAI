@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { apiUrl } from "../lib/api";
 import AuthShell from "./AuthShell";
+import { authenticateLocalDemoAccount } from "./localAccount";
 import { getStoredUser, isProfileReady, storeUser } from "./session";
 import "./AuthStyles.css";
 
@@ -24,18 +24,11 @@ export default function LoginLocal() {
     setMessage("");
 
     try {
-      const response = await fetch(apiUrl("/api/users/login"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Invalid email or password.");
-
-      storeUser(data.user);
-      navigate(isProfileReady(data.user) ? "/dashboard" : "/onboarding", { replace: true });
+      const user = await authenticateLocalDemoAccount(email, password);
+      storeUser(user);
+      navigate(isProfileReady(user) ? "/dashboard" : "/onboarding", { replace: true });
     } catch (error) {
-      setMessage(error.message || "Unable to sign in right now.");
+      setMessage(error.message || "Unable to open the local demo account.");
     } finally {
       setLoading(false);
     }
@@ -43,11 +36,11 @@ export default function LoginLocal() {
 
   return (
     <AuthShell mode="login">
-      <div className="inline-flex items-center gap-2 rounded-full border border-white/[.07] bg-white/[.025] px-3 py-1.5 text-[9px] uppercase tracking-[.18em] text-white/35">
-        <span className="auth-live-dot h-1.5 w-1.5 rounded-full bg-[#76d7c4]" /> Secure workspace access
+      <div className="inline-flex items-center gap-2 rounded-full border border-[#76d7c4]/15 bg-[#76d7c4]/[.04] px-3 py-1.5 text-[9px] uppercase tracking-[.18em] text-[#8be5d3]">
+        <span className="auth-live-dot h-1.5 w-1.5 rounded-full bg-[#76d7c4]" /> Local demo access
       </div>
       <h2 className="mt-5 text-4xl font-semibold leading-[1.02] tracking-[-.055em] sm:text-5xl">Welcome back.</h2>
-      <p className="mt-4 text-sm leading-7 text-white/36">Sign in to continue from your saved Career Profile, resume intelligence and role-readiness context.</p>
+      <p className="mt-4 text-sm leading-7 text-white/36">Sign in to the local CareerUp demo saved in this browser. No backend request is required to open the workspace.</p>
 
       {message && <div className="mt-6 rounded-2xl border border-rose-400/15 bg-rose-400/[.05] px-4 py-3 text-sm leading-6 text-rose-200/80">{message}</div>}
 
@@ -60,18 +53,20 @@ export default function LoginLocal() {
         <label className="block">
           <span className="mb-2 block text-xs font-medium text-white/46">Password</span>
           <div className="relative">
-            <input type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} required autoComplete="current-password" placeholder="Enter your password" className="auth-input rounded-2xl px-4 py-3.5 pr-20 text-sm text-white placeholder:text-white/18" />
+            <input type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} required autoComplete="current-password" placeholder="Enter your local demo password" className="auth-input rounded-2xl px-4 py-3.5 pr-20 text-sm text-white placeholder:text-white/18" />
             <button type="button" onClick={() => setShowPassword((value) => !value)} className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-white/30 transition hover:text-white">{showPassword ? "Hide" : "Show"}</button>
           </div>
         </label>
 
         <button disabled={loading} className="auth-primary w-full rounded-2xl bg-[#f0d481] px-5 py-3.5 text-sm font-semibold text-[#11131a] transition hover:-translate-y-0.5 hover:bg-[#f5dc92] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0">
-          <span className="relative z-10">{loading ? "Opening workspace…" : "Continue to CareerUp"}</span>
+          <span className="relative z-10">{loading ? "Opening local workspace…" : "Open CareerUp demo"}</span>
         </button>
       </form>
 
-      <div className="mt-6 flex items-center gap-3 text-[10px] text-white/22"><span className="h-px flex-1 bg-white/[.06]" /><span>Your local session stays available after refresh</span><span className="h-px flex-1 bg-white/[.06]" /></div>
-      <p className="mt-6 text-center text-xs text-white/30">New to CareerUp? <Link to="/register" className="font-medium text-[#efd080] transition hover:text-white">Create your account</Link></p>
+      <div className="mt-6 rounded-2xl border border-white/[.06] bg-white/[.02] p-4 text-[10px] leading-5 text-white/22">
+        This demo account exists only in this browser. Logging out keeps the local demo so you can sign back in later, but clearing site data removes it.
+      </div>
+      <p className="mt-6 text-center text-xs text-white/30">Need a local demo account? <Link to="/register" className="font-medium text-[#efd080] transition hover:text-white">Create one</Link></p>
     </AuthShell>
   );
 }
