@@ -36,6 +36,29 @@ export function clearStoredUser() {
   localStorage.removeItem("careerup_cv_name");
 }
 
+export function isProfileReady(user = getStoredUser()) {
+  if (!user) return false;
+  return Boolean(
+    user.name?.trim() &&
+    user.education?.trim() &&
+    Array.isArray(user.skills) && user.skills.length > 0 &&
+    Array.isArray(user.careerInterests) && user.careerInterests.length > 0 &&
+    user.careerGoal?.trim()
+  );
+}
+
+export function getProfileCompletion(user = getStoredUser()) {
+  if (!user) return 0;
+  const checks = [
+    Boolean(user.name?.trim()),
+    Boolean(user.education?.trim()),
+    Array.isArray(user.skills) && user.skills.length > 0,
+    Array.isArray(user.careerInterests) && user.careerInterests.length > 0,
+    Boolean(user.careerGoal?.trim()),
+  ];
+  return Math.round((checks.filter(Boolean).length / checks.length) * 100);
+}
+
 export function isLoggedIn() {
   return Boolean(getStoredUser());
 }
