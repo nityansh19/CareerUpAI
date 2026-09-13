@@ -5,10 +5,13 @@ import ProductionCopy from "./ProductionCopy";
 import { PublicPage } from "./PublicPages";
 import ResumeIntelligence from "./ResumeIntelligence";
 import CareerIntelligence from "./CareerIntelligence";
+import LocalDemoWorkspace from "./LocalDemoWorkspace";
+import { LocalDemoCareerIntelligence, LocalDemoResumeIntelligence } from "./LocalDemoIntelligence";
 import LoginLocal from "./auth/LoginLocal";
 import RegisterLocal from "./auth/RegisterLocal";
 import Onboarding from "./auth/Onboarding";
 import Dashboard from "./Dashboard/Dashboard";
+import { isLocalDemoUser } from "./auth/localAccount";
 import { getStoredUser, isProfileReady } from "./auth/session";
 import PerformanceStyles from "./performance/PerformanceStyles";
 
@@ -31,6 +34,7 @@ function GuestOnlyRoute({ children }) {
 function OnboardingRoute() {
   const user = getStoredUser();
   if (!user) return <Navigate to="/login" replace />;
+  if (isLocalDemoUser(user)) return <Navigate to="/dashboard" replace />;
   if (isProfileReady(user)) return <Navigate to="/dashboard" replace />;
   return <Onboarding />;
 }
@@ -38,16 +42,21 @@ function OnboardingRoute() {
 function DashboardRoute() {
   const user = getStoredUser();
   if (!user) return <Navigate to="/login" replace />;
+  if (isLocalDemoUser(user)) return <LocalDemoWorkspace />;
   if (!isProfileReady(user)) return <Navigate to="/onboarding" replace />;
   return <Dashboard />;
 }
 
 function ResumeRoute() {
-  return getStoredUser() ? <ResumeIntelligence /> : <PublicPage type="resume" />;
+  const user = getStoredUser();
+  if (!user) return <PublicPage type="resume" />;
+  return isLocalDemoUser(user) ? <LocalDemoResumeIntelligence /> : <ResumeIntelligence />;
 }
 
 function CareerIntelligenceRoute() {
-  return getStoredUser() ? <CareerIntelligence /> : <PublicPage type="intelligence" />;
+  const user = getStoredUser();
+  if (!user) return <PublicPage type="intelligence" />;
+  return isLocalDemoUser(user) ? <LocalDemoCareerIntelligence /> : <CareerIntelligence />;
 }
 
 export default function App2() {
