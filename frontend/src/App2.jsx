@@ -22,10 +22,6 @@ function LandingPage() {
   );
 }
 
-function ProtectedRoute({ children }) {
-  return getStoredUser() ? children : <Navigate to="/login" replace />;
-}
-
 function GuestOnlyRoute({ children }) {
   const user = getStoredUser();
   if (!user) return children;
