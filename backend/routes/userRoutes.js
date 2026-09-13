@@ -122,7 +122,12 @@ router.post("/upload-cv/:id", upload.single("cv"), async (req, res) => {
 
     const user = await User.findByIdAndUpdate(
       id,
-      { cvFile: req.file.filename, cvOriginalName: req.file.originalname, careerIntelligence: undefined },
+      {
+        cvFile: req.file.filename,
+        cvOriginalName: req.file.originalname,
+        resumeAnalysis: undefined,
+        careerIntelligence: undefined,
+      },
       { new: true }
     );
 
