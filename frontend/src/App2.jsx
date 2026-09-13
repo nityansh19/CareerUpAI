@@ -7,8 +7,9 @@ import ResumeIntelligence from "./ResumeIntelligence";
 import CareerIntelligence from "./CareerIntelligence";
 import LoginLocal from "./auth/LoginLocal";
 import RegisterLocal from "./auth/RegisterLocal";
+import Onboarding from "./auth/Onboarding";
 import Dashboard from "./Dashboard/Dashboard";
-import { getStoredUser } from "./auth/session";
+import { getStoredUser, isProfileReady } from "./auth/session";
 import PerformanceStyles from "./performance/PerformanceStyles";
 
 function LandingPage() {
@@ -26,7 +27,23 @@ function ProtectedRoute({ children }) {
 }
 
 function GuestOnlyRoute({ children }) {
-  return getStoredUser() ? <Navigate to="/dashboard" replace /> : children;
+  const user = getStoredUser();
+  if (!user) return children;
+  return <Navigate to={isProfileReady(user) ? "/dashboard" : "/onboarding"} replace />;
+}
+
+function OnboardingRoute() {
+  const user = getStoredUser();
+  if (!user) return <Navigate to="/login" replace />;
+  if (isProfileReady(user)) return <Navigate to="/dashboard" replace />;
+  return <Onboarding />;
+}
+
+function DashboardRoute() {
+  const user = getStoredUser();
+  if (!user) return <Navigate to="/login" replace />;
+  if (!isProfileReady(user)) return <Navigate to="/onboarding" replace />;
+  return <Dashboard />;
 }
 
 function ResumeRoute() {
@@ -51,7 +68,8 @@ export default function App2() {
         <Route path="/about" element={<PublicPage type="about" />} />
         <Route path="/login" element={<GuestOnlyRoute><LoginLocal /></GuestOnlyRoute>} />
         <Route path="/register" element={<GuestOnlyRoute><RegisterLocal /></GuestOnlyRoute>} />
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/onboarding" element={<OnboardingRoute />} />
+        <Route path="/dashboard" element={<DashboardRoute />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
