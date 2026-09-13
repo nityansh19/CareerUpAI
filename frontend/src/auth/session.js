@@ -1,3 +1,5 @@
+import { isLocalDemoUser, LOCAL_USER_KEY } from "./localAccount";
+
 export const SESSION_KEY = "user";
 
 export function getStoredUser() {
@@ -21,6 +23,9 @@ export function getStoredUser() {
 export function storeUser(user) {
   if (!user?.id || !user?.email) return;
   localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+  if (isLocalDemoUser(user)) {
+    localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(user));
+  }
 }
 
 export function updateStoredUser(patch) {
