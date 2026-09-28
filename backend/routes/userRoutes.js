@@ -2,7 +2,6 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const User = require("../models/User");
-
 const router = express.Router();
 
 // ===============================
@@ -130,6 +129,12 @@ router.post("/login", async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        education: user.education,
+        skills: user.skills,
+        careerInterests: user.careerInterests,
+        careerGoal: user.careerGoal,
+        cvFile: user.cvFile,
+        cvOriginalName: user.cvOriginalName,
       },
     });
   } catch (error) {

@@ -14,6 +14,7 @@ app.use(express.json());
 
 // User routes
 app.use("/api/users", userRoutes);
+app.use("/api/resume-analysis", require("./routes/resumeRoutes"));
 
 app.get("/", (req, res) => {
   res.send("CareerUp AI Backend is Running!");

@@ -9,6 +9,9 @@ import {
 import Login from "./auth/Login";
 import Register from "./auth/Register";
 import Dashboard from "./Dashboard/Dashboard";
+import CareerRecommendations from "./careers/CareerRecommendations";
+import SkillGapAnalysis from "./careers/SkillGapAnalysis";
+import ResumeAnalyzer from "./careers/ResumeAnalyzer";
 
 const GOLD = "#D7B45A";
 const GOLD_LIGHT = "#F0D98A";
@@ -1572,6 +1575,9 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/careers" element={<CareerRecommendations />} />
+        <Route path="/skill-gap" element={<SkillGapAnalysis />} />
+        <Route path="/resume" element={<ResumeAnalyzer />} />
       </Routes>
     </BrowserRouter>
   );
