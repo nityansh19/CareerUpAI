@@ -1,16 +1,45 @@
 import { isLocalDemoUser, LOCAL_USER_KEY } from "./localAccount";
+import { createDemoWorkspaceUser } from "../demoIntelligence";
 
 export const SESSION_KEY = "user";
+
+function migrateToLocal(user) {
+  if (!user?.id || !user?.email) return null;
+  if (isLocalDemoUser(user)) return user;
+
+  const localId = `local-${user.id}`;
+  const defaults = createDemoWorkspaceUser({
+    id: localId,
+    name: user.name || "CareerUp Tester",
+    email: user.email,
+  });
+
+  return {
+    ...defaults,
+    ...user,
+    id: localId,
+    isLocalDemo: true,
+    demoWorkspace: true,
+  };
+}
 
 export function getStoredUser() {
   try {
     const raw = localStorage.getItem(SESSION_KEY);
     if (!raw) return null;
 
-    const user = JSON.parse(raw);
-    if (!user?.id || !user?.email) {
+    const parsed = JSON.parse(raw);
+    if (!parsed?.id || !parsed?.email) {
       clearStoredUser();
       return null;
+    }
+
+    const user = migrateToLocal(parsed);
+    if (!user) return null;
+
+    if (!isLocalDemoUser(parsed)) {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+      localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(user));
     }
 
     return user;
@@ -22,16 +51,15 @@ export function getStoredUser() {
 
 export function storeUser(user) {
   if (!user?.id || !user?.email) return;
-  localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-  if (isLocalDemoUser(user)) {
-    localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(user));
-  }
+  const localUser = migrateToLocal(user) || user;
+  localStorage.setItem(SESSION_KEY, JSON.stringify(localUser));
+  localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(localUser));
 }
 
 export function updateStoredUser(patch) {
   const current = getStoredUser();
   if (!current) return null;
-  const next = { ...current, ...patch };
+  const next = { ...current, ...patch, isLocalDemo: true, demoWorkspace: true };
   storeUser(next);
   return next;
 }
