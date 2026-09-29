@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { apiUrl } from "../lib/api";
 
 function Dashboard() {
   const [showProfile, setShowProfile] = useState(false);
@@ -42,7 +43,7 @@ function Dashboard() {
 
       // Send profile to backend
       const response = await fetch(
-        `http://localhost:5000/api/users/profile/${user.id}`,
+        apiUrl(`/api/users/profile/${user.id}`),
         {
           method: "PUT",
           headers: {
