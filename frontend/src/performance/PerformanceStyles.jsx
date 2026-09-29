@@ -1,7 +1,7 @@
 export default function PerformanceStyles() {
   return (
     <style>{`
-      main > section{content-visibility:auto;contain-intrinsic-size:900px}
+      .career-public-main > section{content-visibility:auto;contain-intrinsic-size:600px}
       .career-reveal-section{will-change:auto!important}
 
       @media (max-width: 900px), (pointer: coarse){

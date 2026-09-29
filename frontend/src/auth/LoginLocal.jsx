@@ -39,12 +39,12 @@ export default function LoginLocal() {
       <div className="inline-flex items-center gap-2 rounded-full border border-[#76d7c4]/15 bg-[#76d7c4]/[.04] px-3 py-1.5 text-[9px] uppercase tracking-[.18em] text-[#8be5d3]">
         <span className="auth-live-dot h-1.5 w-1.5 rounded-full bg-[#76d7c4]" /> Local demo access
       </div>
-      <h2 className="mt-5 text-4xl font-semibold leading-[1.02] tracking-[-.055em] sm:text-5xl">Welcome back.</h2>
+      <h2 className="mt-5 text-3xl font-semibold leading-[1.1] tracking-[-.04em] sm:text-4xl">Welcome back.</h2>
       <p className="mt-4 text-sm leading-7 text-white/36">Sign in to the local CareerUp demo saved in this browser. No backend request is required to open the workspace.</p>
 
       {message && <div className="mt-6 rounded-2xl border border-rose-400/15 bg-rose-400/[.05] px-4 py-3 text-sm leading-6 text-rose-200/80">{message}</div>}
 
-      <form onSubmit={submit} className="mt-8 space-y-5">
+      <form onSubmit={submit} className="mt-6 space-y-4">
         <label className="block">
           <span className="mb-2 block text-xs font-medium text-white/46">Email</span>
           <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" placeholder="you@example.com" className="auth-input rounded-2xl px-4 py-3.5 text-sm text-white placeholder:text-white/18" />

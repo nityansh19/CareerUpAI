@@ -40,12 +40,12 @@ export default function RegisterLocal() {
       <div className="inline-flex items-center gap-2 rounded-full border border-[#76d7c4]/15 bg-[#76d7c4]/[.04] px-3 py-1.5 text-[9px] uppercase tracking-[.18em] text-[#8be5d3]">
         Local demo mode · No server required
       </div>
-      <h1 className="mt-5 text-4xl font-semibold leading-[1.02] tracking-[-.055em] sm:text-5xl">Create your CareerUp demo workspace.</h1>
+      <h1 className="mt-5 text-3xl font-semibold leading-[1.1] tracking-[-.04em] sm:text-4xl">Create your CareerUp demo workspace.</h1>
       <p className="mt-4 text-sm leading-7 text-white/36">Your account is created only in this browser. CareerUp will load a clearly marked sample Career Profile, Resume Intelligence report and Career Intelligence matches so you can explore the product immediately.</p>
 
       {message && <div className="mt-6 rounded-2xl border border-rose-400/15 bg-rose-400/[.05] px-4 py-3 text-sm leading-6 text-rose-200/80">{message}</div>}
 
-      <form onSubmit={submit} className="mt-8 space-y-5">
+      <form onSubmit={submit} className="mt-6 space-y-4">
         <label className="block">
           <span className="mb-2 block text-xs font-medium text-white/46">Full name</span>
           <input value={form.name} onChange={(event) => setField("name", event.target.value)} required autoComplete="name" placeholder="Your full name" className="auth-input rounded-2xl px-4 py-3.5 text-sm text-white placeholder:text-white/18" />

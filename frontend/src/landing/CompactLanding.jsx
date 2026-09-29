@@ -79,10 +79,10 @@ function ModePanel({ mode }) {
     <div key={mode.key} className="preview-swap grid gap-4 lg:grid-cols-[.92fr_1.08fr]">
       <div className="rounded-[28px] border border-white/[.07] bg-white/[.025] p-6 sm:p-8">
         <p className="text-[10px] uppercase tracking-[.2em]" style={{ color: mode.accent }}>{mode.eyebrow}</p>
-        <h3 className="mt-4 max-w-lg text-3xl font-semibold leading-[1.03] tracking-[-.05em] sm:text-5xl">{mode.title}</h3>
+        <h3 className="mt-4 max-w-lg text-2xl font-semibold leading-[1.08] tracking-[-.04em] sm:text-3xl">{mode.title}</h3>
         <p className="mt-4 max-w-lg text-sm leading-6 text-white/40">{mode.copy}</p>
         <div className="mt-7 flex items-end gap-3">
-          <span className="text-5xl font-semibold tracking-[-.065em] sm:text-6xl">{mode.metric}</span>
+          <span className="text-4xl font-semibold tracking-[-.05em] sm:text-4xl">{mode.metric}</span>
           <span className="pb-1.5 text-xs text-white/28">{mode.metricLabel}</span>
         </div>
         <div className="mt-7 rounded-2xl border border-white/[.06] bg-black/10 p-4">
@@ -94,7 +94,7 @@ function ModePanel({ mode }) {
       <div className="rounded-[28px] border border-white/[.07] bg-[#080b13]/78 p-5 sm:p-7">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-white/72">Live career signal</p>
+            <p className="text-sm font-medium text-white/72">Preview career signal</p>
             <p className="mt-1 text-[10px] text-white/24">Illustrative profile preview</p>
           </div>
           <span className="pulse-dot h-2 w-2 rounded-full bg-[#76d7c4]" />
@@ -138,7 +138,7 @@ export default function CompactLanding() {
 
   return (
     <>
-      <section id="platform" className="relative px-4 py-14 sm:px-6 sm:py-20">
+      <section id="platform" className="relative px-4 py-10 sm:px-6 sm:py-12">
         <div className="mx-auto w-full max-w-[1180px]">
           <div className="grid gap-7 lg:grid-cols-[.72fr_1.28fr] lg:items-end">
             <div>
@@ -169,7 +169,7 @@ export default function CompactLanding() {
         </div>
       </section>
 
-      <section id="career-lab" className="relative px-4 py-12 sm:px-6 sm:py-16">
+      <section id="career-lab" className="relative px-4 py-8 sm:px-6 sm:py-10">
         <div className="mx-auto grid w-full max-w-[1180px] gap-4 lg:grid-cols-[.8fr_1.2fr]">
           <div className="rounded-[30px] border border-white/[.07] bg-white/[.022] p-5 sm:p-6">
             <div className="flex items-center justify-between">
@@ -233,7 +233,7 @@ export default function CompactLanding() {
         </div>
       </section>
 
-      <section id="how-it-works" className="px-4 py-12 sm:px-6 sm:py-16">
+      <section id="how-it-works" className="px-4 py-8 sm:px-6 sm:py-10">
         <div className="mx-auto w-full max-w-[1180px]">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>

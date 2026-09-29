@@ -43,17 +43,20 @@ npm run preview  # Preview the production build locally
 
 ```text
 src/
-├── App.jsx                    Main application composition
-├── CareerIntelligence.jsx     Career intelligence experience
-├── ResumeIntelligence.jsx     Resume-focused intelligence experience
-├── Dashboard/                 Workspace/dashboard modules
-├── PublicPages.jsx            Public-facing product pages
-├── Home3D.jsx                 3D-oriented home experience
-├── WebGLExperience.jsx        WebGL visual experience
-├── LocalDemoWorkspace.jsx     Local demo workspace
-├── LocalDemoIntelligence.jsx  Demo intelligence flow
-└── auth/                      Authentication-related UI and logic
+├── App2.jsx                   Active routes and workspace guards
+├── workspace/                 Compact shell, home, modules and shared styles
+├── PublicPages.jsx            Public product pages
+├── Home3D.jsx                 Public home experience
+├── WebGLExperience.jsx        Public visual experience
+├── demoIntelligence.js        Clearly marked local sample reports
+└── auth/                      Authentication, onboarding and session logic
 ```
+
+The workspace keeps the existing resume and career API calls. Jobs has a browser-local
+application tracker; live job discovery is not connected yet. Interview practice uses
+fixed questions and does not claim AI scoring. Local demo reports are illustrative.
+Legacy page components remain in the repository while the active UI is served from
+`workspace/` through `App2.jsx`.
 
 ## Contribution rule
 
