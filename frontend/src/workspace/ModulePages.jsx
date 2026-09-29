@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { clearStoredUser, getStoredUser, storeUser } from "../auth/session";
 import { buildDemoCareerIntelligence, buildDemoResumeAnalysis } from "../demoIntelligence";
-import { apiUrl } from "../lib/api";
 import { DemoBanner, EmptyState, Icon, PageHeader } from "./WorkspaceShell";
 
 function readSaved(key) { try { const saved = JSON.parse(localStorage.getItem(key) || "[]"); return Array.isArray(saved) ? saved : []; } catch { return []; } }
@@ -30,19 +29,23 @@ export function ProfilePage() {
   const save = async (event) => {
     event.preventDefault(); setSaving(true); setMessage("");
     try {
-      let next;
-      if (user.isLocalDemo) {
-        const base = { ...user, name:form.fullName.trim(), education:form.education.trim(), careerGoal:form.careerGoal.trim(), skills:parse(form.skills), careerInterests:parse(form.interests) };
-        const resumeAnalysis = buildDemoResumeAnalysis(base, base.cvOriginalName);
-        next = { ...base, resumeAnalysis, careerIntelligence:buildDemoCareerIntelligence({ ...base, resumeAnalysis }) };
-        setMessage("Demo profile saved. Sample results were recalculated locally.");
-      } else {
-        const response = await fetch(apiUrl(`/api/users/profile/${user.id}`), { method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(form) });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.message || "Unable to save your profile.");
-        next = data.user;
-        setMessage("Profile saved. Refresh your Career AI matches to use the latest details.");
-      }
+      const base = {
+        ...user,
+        isLocalDemo: true,
+        demoWorkspace: true,
+        name: form.fullName.trim(),
+        education: form.education.trim(),
+        careerGoal: form.careerGoal.trim(),
+        skills: parse(form.skills),
+        careerInterests: parse(form.interests),
+      };
+      const resumeAnalysis = buildDemoResumeAnalysis(base, base.cvOriginalName);
+      const next = {
+        ...base,
+        resumeAnalysis,
+        careerIntelligence: buildDemoCareerIntelligence({ ...base, resumeAnalysis }),
+      };
+      setMessage("Profile saved locally. Resume and Career AI previews were recalculated in this browser.");
       storeUser(next); setUser(next);
       window.dispatchEvent(new Event("careerup:user-updated"));
     } catch (error) { setMessage(error.message || "Unable to save your profile."); }
@@ -120,5 +123,5 @@ export function SettingsPage() {
   const user = getStoredUser() || {};
   const navigate = useNavigate();
   const logout = () => { clearStoredUser(); navigate("/",{replace:true}); };
-  return <><PageHeader eyebrow="ACCOUNT" title="Settings" description="Your account and workspace details."/><div className="ws-card ws-panel" style={{maxWidth:640}}><div className="ws-row"><div><strong>Account</strong><div><small>{user.email}</small></div></div><Link className="ws-btn" to="/profile">Edit profile</Link></div><div className="ws-row"><div><strong>Data mode</strong><div><small>{user.isLocalDemo ? "Local demo · browser storage" : "Connected account · profile API"}</small></div></div></div><div className="ws-row"><div><strong>Quick actions</strong><div><small>Press Ctrl / Cmd + K anywhere in the workspace</small></div></div></div><div className="ws-row"><div><strong>Session</strong><div><small>Sign out on this device</small></div></div><button onClick={logout} className="ws-btn"><Icon name="logout" size={15}/> Sign out</button></div></div></>;
+  return <><PageHeader eyebrow="ACCOUNT" title="Settings" description="Your account and workspace details."/><div className="ws-card ws-panel" style={{maxWidth:640}}><div className="ws-row"><div><strong>Account</strong><div><small>{user.email}</small></div></div><Link className="ws-btn" to="/profile">Edit profile</Link></div><div className="ws-row"><div><strong>Data mode</strong><div><small>{"Local testing · browser storage only"}</small></div></div></div><div className="ws-row"><div><strong>Quick actions</strong><div><small>Press Ctrl / Cmd + K anywhere in the workspace</small></div></div></div><div className="ws-row"><div><strong>Session</strong><div><small>Sign out on this device</small></div></div><button onClick={logout} className="ws-btn"><Icon name="logout" size={15}/> Sign out</button></div></div></>;
 }
