@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { listValues } from "./recommendations";
+import { apiUrl } from "../lib/api";
 
 export default function ResumeAnalyzer() {
   const [file, setFile] = useState(null);
@@ -21,7 +22,7 @@ export default function ResumeAnalyzer() {
     body.append("skills", JSON.stringify(listValues(user.skills)));
     setBusy(true);
     try {
-      const response = await fetch("http://localhost:5000/api/resume-analysis", { method: "POST", body, signal: AbortSignal.timeout(60000) });
+      const response = await fetch(apiUrl("/api/resume-analysis"), { method: "POST", body, signal: AbortSignal.timeout(60000) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Unable to analyze this PDF.");
       setResult(data);
