@@ -4,8 +4,9 @@
   "description": "CareerUp AI Backend",
   "main": "backend/server.js",
   "scripts": {
-    "start": "node backend/server.js",
-    "dev": "nodemon backend/server.js"
+    "start": "npm --prefix backend start",
+    "dev": "npm --prefix backend run dev",
+    "postinstall": "npm --prefix backend install"
   },
   "keywords": [],
   "author": "",
@@ -14,9 +15,7 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^5.2.1",
-    "mongoose": "^8.18.0",
-    "multer": "^2.2.0",
-    "pdf-parse": "^2.4.5"
+    "mongoose": "^8.18.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
