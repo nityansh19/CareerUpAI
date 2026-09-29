@@ -2,7 +2,6 @@ import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { getStoredUser, storeUser } from "../auth/session";
 import { buildDemoCareerIntelligence, buildDemoResumeAnalysis } from "../demoIntelligence";
-import { apiUrl } from "../lib/api";
 import { DemoBanner, EmptyState, Icon, PageHeader } from "./WorkspaceShell";
 
 function List({ items, empty }) {
@@ -30,20 +29,10 @@ export function ResumePage() {
     if (file.type !== "application/pdf") { setMessage("Choose a PDF resume to continue."); return; }
     setLoading(true); setMessage("");
     try {
-      let next;
-      if (demo) {
-        const base = { ...user, cvOriginalName: file.name, cvFile: `local-demo:${file.name}` };
-        const resumeAnalysis = buildDemoResumeAnalysis(base, file.name);
-        next = { ...base, resumeAnalysis, careerIntelligence: buildDemoCareerIntelligence({ ...base, resumeAnalysis }) };
-        setMessage("Sample report updated from your demo profile. The PDF contents were not read.");
-      } else {
-        const body = new FormData(); body.append("cv", file);
-        const response = await fetch(apiUrl(`/api/users/analyze-resume/${user.id}`), { method: "POST", body });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.message || "Resume analysis failed.");
-        next = data.user || { ...user, cvOriginalName: data.cv?.originalName || file.name, resumeAnalysis: data.analysis };
-        setMessage("Resume analysis complete.");
-      }
+      const base = { ...user, isLocalDemo: true, demoWorkspace: true, cvOriginalName: file.name, cvFile: `local-demo:${file.name}` };
+      const resumeAnalysis = buildDemoResumeAnalysis(base, file.name);
+      const next = { ...base, resumeAnalysis, careerIntelligence: buildDemoCareerIntelligence({ ...base, resumeAnalysis }) };
+      setMessage("Local testing report updated from your profile. No file was sent to a server.");
       localStorage.setItem("careerup_cv_name", next.cvOriginalName || file.name);
       storeUser(next); setUser(next); setTab("Overview");
     } catch (error) { setMessage(error.message || "Unable to analyze your resume."); }
@@ -55,14 +44,18 @@ export function ResumePage() {
     if (file.type !== "application/pdf") { setMessage("Choose a PDF resume to continue."); return; }
     setLoading(true); setMessage("");
     try {
-      const body = new FormData(); body.append("cv", file);
-      const response = await fetch(apiUrl(`/api/users/upload-cv/${user.id}`), { method:"POST", body });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Unable to connect your resume.");
-      const next = data.user || { ...user, cvOriginalName:data.cv?.originalName || file.name, cvFile:data.cv?.fileName, resumeAnalysis:null, careerIntelligence:null };
+      const next = {
+        ...user,
+        isLocalDemo: true,
+        demoWorkspace: true,
+        cvOriginalName: file.name,
+        cvFile: `local-demo:${file.name}`,
+        resumeAnalysis: null,
+        careerIntelligence: null,
+      };
       storeUser(next); setUser(next); setTab("Overview");
-      localStorage.setItem("careerup_cv_name", next.cvOriginalName || file.name);
-      setMessage("Resume connected. Analyze it whenever you are ready.");
+      localStorage.setItem("careerup_cv_name", file.name);
+      setMessage("Resume connected locally. Analyze it whenever you are ready.");
     } catch (error) { setMessage(error.message || "Unable to connect your resume."); }
     finally { setLoading(false); }
   };
@@ -71,7 +64,7 @@ export function ResumePage() {
     {demo && <DemoBanner/>}
     <PageHeader eyebrow="PREPARE / RESUME" title="Resume" description="See what your resume communicates and improve one thing at a time." action={<button className="ws-btn ws-btn-primary" disabled={loading} onClick={() => inputRef.current?.click()}><Icon name="file" size={16}/>{loading ? "Analyzing…" : analysis ? "Analyze another PDF" : "Upload & analyze PDF"}</button>}/>
     {message && <p className="ws-message" role="status">{message}</p>}
-    <div className="ws-card ws-panel ws-panel-header"><div><p className="ws-section-kicker">CURRENT RESUME</p><h2 style={{marginTop:8}}>{fileName || "No resume connected yet"}</h2><p>{demo ? "Illustrative report based on your local demo profile" : `Target role: ${user.careerGoal || "Add one to your profile"}`}</p>{!demo && <button type="button" disabled={loading} onClick={() => uploadRef.current?.click()} style={{border:0,background:"none",padding:0,marginTop:7,fontSize:11,color:"#b6aaff"}}>Connect a PDF without analysis</button>}</div>{analysis && <div className="ws-score">{analysis.overallScore}<small>/ 100</small></div>}</div>
+    <div className="ws-card ws-panel ws-panel-header"><div><p className="ws-section-kicker">CURRENT RESUME</p><h2 style={{marginTop:8}}>{fileName || "No resume connected yet"}</h2><p>{"Local testing report stored in this browser"}</p><button type="button" disabled={loading} onClick={() => uploadRef.current?.click()} style={{border:0,background:"none",padding:0,marginTop:7,fontSize:11,color:"#b6aaff"}}>Connect a PDF locally without analysis</button></div>{analysis && <div className="ws-score">{analysis.overallScore}<small>/ 100</small></div>}</div>
     {!analysis ? <div style={{marginTop:16}}><EmptyState icon="file" title="Start with your resume" description="Upload a text based PDF to see structure, skill coverage, and targeted suggestions. Scanned image PDFs may not contain readable text." action={<button className="ws-btn ws-btn-primary" onClick={() => inputRef.current?.click()}>Choose PDF <Icon name="arrow" size={15}/></button>}/></div> : <>
       <div className="ws-tabs" role="tablist" aria-label="Resume report">{["Overview", "Suggestions", "Details"].map((item) => <button role="tab" aria-selected={tab === item} className={tab === item ? "active" : ""} key={item} onClick={() => setTab(item)}>{item}</button>)}</div>
       {tab === "Overview" && <div className="ws-grid-two"><section className="ws-card ws-panel"><h2>Resume strength</h2><p>A quick view of the latest analysis.</p><ScoreBars analysis={analysis}/></section><section className="ws-card ws-panel"><h2>Your next improvement</h2><p>Start with the first recommendation, then work through the rest.</p><List items={(analysis.recommendations || []).slice(0, 2)} empty="No recommendations yet."/><button className="ws-btn" style={{marginTop:14}} onClick={() => setTab("Suggestions")}>View all suggestions <Icon name="arrow" size={14}/></button></section></div>}
@@ -96,17 +89,13 @@ export function CareerPage() {
   const generate = async () => {
     setLoading(true); setMessage("");
     try {
-      let next;
-      if (demo) {
-        next = { ...user, careerIntelligence: buildDemoCareerIntelligence(user) };
-        setMessage("Demo matches recalculated from your local profile.");
-      } else {
-        const response = await fetch(apiUrl(`/api/users/career-intelligence/${user.id}`), { method: "POST" });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.message || "Unable to generate career matches.");
-        next = data.user || { ...user, careerIntelligence: data.intelligence };
-        setMessage("Career matches updated from your latest profile and resume.");
-      }
+      const next = {
+        ...user,
+        isLocalDemo: true,
+        demoWorkspace: true,
+        careerIntelligence: buildDemoCareerIntelligence(user),
+      };
+      setMessage("Career matches recalculated locally from your saved profile.");
       storeUser(next); setUser(next); setSelected(0);
     } catch (error) { setMessage(error.message || "Unable to generate career matches."); }
     finally { setLoading(false); }
