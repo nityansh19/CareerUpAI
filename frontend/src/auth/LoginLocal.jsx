@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthShell from "./AuthShell";
-import { apiUrl } from "../lib/api";
+import { apiUrl, configuredApiUrl } from "../lib/api";
 import { authenticateLocalDemoAccount } from "./localAccount";
 import { getStoredUser, isProfileReady, storeUser } from "./session";
 import "./AuthStyles.css";
 
-const remoteAuthConfigured = Boolean(String(import.meta.env.VITE_API_URL || "").trim());
+const remoteAuthConfigured = Boolean(configuredApiUrl);
 
 export default function LoginLocal() {
   const navigate = useNavigate();
