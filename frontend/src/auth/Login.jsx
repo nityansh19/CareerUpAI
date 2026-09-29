@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { apiUrl } from "../lib/api";
 
 const INK = "#0B1220";
 const INK_SOFT = "#141D30";
@@ -318,7 +319,7 @@ export default function Login() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/users/login",
+        apiUrl("/api/users/login"),
         {
           method: "POST",
           headers: {
