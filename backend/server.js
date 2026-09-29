@@ -5,7 +5,7 @@ const connectDB = require("./db");
 const userRoutes = require("./routes/userRoutes");
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 connectDB();
 
@@ -20,6 +20,6 @@ app.get("/", (req, res) => {
   res.send("CareerUp AI Backend is Running!");
 });
 
-app.listen(PORT, () => {
-  console.log(`CareerUp AI Backend running on http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`CareerUp AI Backend running on port ${PORT}`);
 });
