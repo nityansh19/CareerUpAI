@@ -6,7 +6,7 @@ import { createLocalDemoAccount } from "./localAccount";
 import { getStoredUser, isProfileReady, storeUser } from "./session";
 import "./AuthStyles.css";
 
-const remoteAuthEnabled = Boolean(String(import.meta.env.VITE_API_URL || "").trim());
+const remoteAuthConfigured = Boolean(String(import.meta.env.VITE_API_URL || "").trim());
 
 export default function RegisterLocal() {
   const navigate = useNavigate();
@@ -14,10 +14,40 @@ export default function RegisterLocal() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [remoteAuthEnabled, setRemoteAuthEnabled] = useState(false);
+  const [checkingApi, setCheckingApi] = useState(remoteAuthConfigured);
 
   useEffect(() => {
     const existing = getStoredUser();
-    if (existing) navigate(isProfileReady(existing) ? "/dashboard" : "/onboarding", { replace: true });
+    if (existing) {
+      navigate(isProfileReady(existing) ? "/dashboard" : "/onboarding", { replace: true });
+      return;
+    }
+
+    if (!remoteAuthConfigured) {
+      setCheckingApi(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    fetch(apiUrl("/health"), { signal: controller.signal })
+      .then((response) => {
+        setRemoteAuthEnabled(response.ok);
+      })
+      .catch(() => {
+        setRemoteAuthEnabled(false);
+      })
+      .finally(() => {
+        clearTimeout(timeout);
+        setCheckingApi(false);
+      });
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
   }, [navigate]);
 
   const setField = (key, value) => setForm((current) => ({ ...current, [key]: value }));
@@ -68,6 +98,8 @@ export default function RegisterLocal() {
       <h1 className="mt-5 text-3xl font-semibold leading-[1.1] tracking-[-.04em] sm:text-4xl">{remoteAuthEnabled ? "Create your CareerUp workspace." : "Create your CareerUp demo workspace."}</h1>
       <p className="mt-4 text-sm leading-7 text-white/36">{remoteAuthEnabled ? "Create an account, complete your Career Profile and continue into your persistent CareerUp workspace." : "Your account is created only in this browser. CareerUp will load a clearly marked sample Career Profile, Resume Intelligence report and Career Intelligence matches so you can explore the product immediately."}</p>
 
+      {!checkingApi && remoteAuthConfigured && !remoteAuthEnabled && !message && <div className="mt-6 rounded-2xl border border-amber-300/15 bg-amber-300/[.05] px-4 py-3 text-xs leading-6 text-amber-100/70">The online API is unavailable, so CareerUp switched to local demo mode instead of blocking account access.</div>}
+
       {message && <div className="mt-6 rounded-2xl border border-rose-400/15 bg-rose-400/[.05] px-4 py-3 text-sm leading-6 text-rose-200/80">{message}</div>}
 
       <form onSubmit={submit} className="mt-6 space-y-4">
@@ -89,8 +121,8 @@ export default function RegisterLocal() {
           </div>
         </label>
 
-        <button disabled={loading} className="auth-primary w-full rounded-2xl bg-[#f0d481] px-5 py-3.5 text-sm font-semibold text-[#11131a] transition hover:-translate-y-0.5 hover:bg-[#f5dc92] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0">
-          <span className="relative z-10">{loading ? (remoteAuthEnabled ? "Creating account…" : "Preparing demo workspace…") : (remoteAuthEnabled ? "Create CareerUp account" : "Create local demo & explore")}</span>
+        <button disabled={loading || checkingApi} className="auth-primary w-full rounded-2xl bg-[#f0d481] px-5 py-3.5 text-sm font-semibold text-[#11131a] transition hover:-translate-y-0.5 hover:bg-[#f5dc92] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0">
+          <span className="relative z-10">{checkingApi ? "Checking CareerUp service…" : loading ? (remoteAuthEnabled ? "Creating account…" : "Preparing demo workspace…") : (remoteAuthEnabled ? "Create CareerUp account" : "Create local demo & explore")}</span>
         </button>
       </form>
 
