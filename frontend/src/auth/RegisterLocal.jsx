@@ -95,13 +95,13 @@ export default function RegisterLocal() {
       </form>
 
       <div className="mt-6 rounded-2xl border border-white/[.06] bg-white/[.02] p-4">
-        <p className="text-[9px] uppercase tracking-[.18em] text-white/22">Explore immediately</p>
+        <p className="text-[9px] uppercase tracking-[.18em] text-white/22">{remoteAuthEnabled ? "Your CareerUp workspace" : "Explore immediately"}</p>
         <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px] text-white/35">
           <span className="rounded-xl bg-white/[.025] px-2 py-2.5">Dashboard</span>
           <span className="rounded-xl bg-white/[.025] px-2 py-2.5">Resume AI</span>
           <span className="rounded-xl bg-white/[.025] px-2 py-2.5">Career AI</span>
         </div>
-        <p className="mt-3 text-[10px] leading-5 text-white/20">Demo credentials and product data stay on this browser. This is not production authentication and no account is created on a server.</p>
+        <p className="mt-3 text-[10px] leading-5 text-white/20">{remoteAuthEnabled ? "Your account is saved by the CareerUp backend so you can return to the same workspace later." : "Demo credentials and product data stay on this browser. This is not production authentication and no account is created on a server."}</p>
       </div>
 
       <p className="mt-6 text-center text-xs text-white/30">{remoteAuthEnabled ? "Already have an account?" : "Already created a local demo?"} <Link to="/login" className="font-medium text-[#efd080] transition hover:text-white">Sign in</Link></p>
