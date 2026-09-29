@@ -1,31 +1,29 @@
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs/promises");
+const pdf = require("pdf-parse");
 const User = require("../models/User");
+const { analyzeResumeText } = require("../services/resumeAnalyzer");
+const {
+  generateCareerIntelligence,
+} = require("../services/careerIntelligence");
+
 const router = express.Router();
 
-// ===============================
-// MULTER CONFIGURATION
-// ===============================
-
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-
+  destination: (req, file, cb) => cb(null, "uploads/"),
   filename: (req, file, cb) => {
-    const uniqueName =
-      Date.now() +
-      "-" +
-      Math.round(Math.random() * 1e9) +
-      path.extname(file.originalname);
+    const uniqueName = `${Date.now()}-${Math.round(
+      Math.random() * 1e9
+    )}${path.extname(file.originalname)}`;
 
     cb(null, uniqueName);
   },
 });
 
 const upload = multer({
-  storage: storage,
+  storage,
 
   fileFilter: (req, file, cb) => {
     if (file.mimetype === "application/pdf") {
@@ -40,9 +38,24 @@ const upload = multer({
   },
 });
 
-// ===============================
-// TEST ROUTE
-// ===============================
+const serializeUser = (user) => ({
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  education: user.education,
+  skills: user.skills,
+  careerInterests: user.careerInterests,
+  careerGoal: user.careerGoal,
+  cvFile: user.cvFile,
+  cvOriginalName: user.cvOriginalName,
+  resumeAnalysis: user.resumeAnalysis,
+  careerIntelligence: user.careerIntelligence,
+});
+
+
+/* =========================
+   TEST ROUTE
+========================= */
 
 router.get("/test", (req, res) => {
   res.json({
@@ -50,9 +63,10 @@ router.get("/test", (req, res) => {
   });
 });
 
-// ===============================
-// REGISTER USER
-// ===============================
+
+/* =========================
+   REGISTER
+========================= */
 
 router.post("/register", async (req, res) => {
   try {
@@ -80,6 +94,7 @@ router.post("/register", async (req, res) => {
 
     res.status(201).json({
       message: "User registered successfully!",
+
       user: {
         id: user._id,
         name: user.name,
@@ -95,9 +110,10 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// ===============================
-// LOGIN USER
-// ===============================
+
+/* =========================
+   LOGIN
+========================= */
 
 router.post("/login", async (req, res) => {
   try {
@@ -111,13 +127,7 @@ router.post("/login", async (req, res) => {
 
     const user = await User.findOne({ email });
 
-    if (!user) {
-      return res.status(401).json({
-        message: "Invalid email or password",
-      });
-    }
-
-    if (user.password !== password) {
+    if (!user || user.password !== password) {
       return res.status(401).json({
         message: "Invalid email or password",
       });
@@ -125,17 +135,7 @@ router.post("/login", async (req, res) => {
 
     res.json({
       message: "Login successful!",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        education: user.education,
-        skills: user.skills,
-        careerInterests: user.careerInterests,
-        careerGoal: user.careerGoal,
-        cvFile: user.cvFile,
-        cvOriginalName: user.cvOriginalName,
-      },
+      user: serializeUser(user),
     });
   } catch (error) {
     console.error(error);
@@ -146,9 +146,10 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// ===============================
-// UPDATE USER PROFILE
-// ===============================
+
+/* =========================
+   UPDATE PROFILE
+========================= */
 
 router.put("/profile/:id", async (req, res) => {
   try {
@@ -162,7 +163,13 @@ router.put("/profile/:id", async (req, res) => {
       careerGoal,
     } = req.body;
 
-    if (!fullName || !education || !skills || !interests || !careerGoal) {
+    if (
+      !fullName ||
+      !education ||
+      !skills ||
+      !interests ||
+      !careerGoal
+    ) {
       return res.status(400).json({
         message: "All profile fields are required",
       });
@@ -171,21 +178,28 @@ router.put("/profile/:id", async (req, res) => {
     const user = await User.findByIdAndUpdate(
       id,
       {
-        name: fullName,
-        education,
+        $set: {
+          name: fullName,
+          education,
 
-        skills: skills
-          .split(",")
-          .map((skill) => skill.trim())
-          .filter((skill) => skill !== ""),
+          skills: skills
+            .split(",")
+            .map((skill) => skill.trim())
+            .filter(Boolean),
 
-        careerInterests: interests
-          .split(",")
-          .map((interest) => interest.trim())
-          .filter((interest) => interest !== ""),
+          careerInterests: interests
+            .split(",")
+            .map((interest) => interest.trim())
+            .filter(Boolean),
 
-        careerGoal,
+          careerGoal,
+        },
+
+        $unset: {
+          careerIntelligence: 1,
+        },
       },
+
       {
         new: true,
         runValidators: true,
@@ -200,16 +214,7 @@ router.put("/profile/:id", async (req, res) => {
 
     res.json({
       message: "Profile saved successfully!",
-
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        education: user.education,
-        skills: user.skills,
-        careerInterests: user.careerInterests,
-        careerGoal: user.careerGoal,
-      },
+      user: serializeUser(user),
     });
   } catch (error) {
     console.error(error);
@@ -220,13 +225,15 @@ router.put("/profile/:id", async (req, res) => {
   }
 });
 
-// ===============================
-// UPLOAD CV
-// ===============================
+
+/* =========================
+   UPLOAD CV
+========================= */
 
 router.post(
   "/upload-cv/:id",
   upload.single("cv"),
+
   async (req, res) => {
     try {
       const { id } = req.params;
@@ -239,10 +246,19 @@ router.post(
 
       const user = await User.findByIdAndUpdate(
         id,
+
         {
-          cvFile: req.file.filename,
-          cvOriginalName: req.file.originalname,
+          $set: {
+            cvFile: req.file.filename,
+            cvOriginalName: req.file.originalname,
+          },
+
+          $unset: {
+            resumeAnalysis: 1,
+            careerIntelligence: 1,
+          },
         },
+
         {
           new: true,
         }
@@ -263,11 +279,7 @@ router.post(
           size: req.file.size,
         },
 
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-        },
+        user: serializeUser(user),
       });
     } catch (error) {
       console.error(error);
@@ -278,5 +290,228 @@ router.post(
     }
   }
 );
+
+
+/* =========================
+   RESUME ANALYZER
+========================= */
+
+router.post(
+  "/analyze-resume/:id",
+  upload.single("cv"),
+
+  async (req, res) => {
+    try {
+      const user = await User.findById(req.params.id);
+
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+        });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({
+          message: "Please upload a PDF resume.",
+        });
+      }
+
+      const buffer = await fs.readFile(req.file.path);
+
+      const parsed = await pdf(buffer);
+
+      const text = (parsed.text || "").trim();
+
+      if (text.length < 80) {
+        return res.status(422).json({
+          message:
+            "We could not extract enough text from this PDF. Try exporting your resume as a text-based PDF instead of an image scan.",
+        });
+      }
+
+      const analysis = analyzeResumeText(text, user);
+
+      user.cvFile = req.file.filename;
+      user.cvOriginalName = req.file.originalname;
+
+      user.resumeAnalysis = analysis;
+
+      user.careerIntelligence = undefined;
+
+      await user.save();
+
+      res.json({
+        message: "Resume analysis complete.",
+
+        analysis,
+
+        cv: {
+          originalName: req.file.originalname,
+          fileName: req.file.filename,
+          size: req.file.size,
+        },
+
+        user: serializeUser(user),
+      });
+    } catch (error) {
+      console.error(
+        "Resume analysis error:",
+        error
+      );
+
+      res.status(500).json({
+        message:
+          "Resume analysis failed. Please try again.",
+      });
+    }
+  }
+);
+
+
+/* =========================
+   GET RESUME ANALYSIS
+========================= */
+
+router.get(
+  "/resume-analysis/:id",
+
+  async (req, res) => {
+    try {
+      const user = await User.findById(
+        req.params.id
+      ).select(
+        "resumeAnalysis cvOriginalName careerGoal"
+      );
+
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+        });
+      }
+
+      res.json({
+        analysis: user.resumeAnalysis || null,
+        cvOriginalName: user.cvOriginalName,
+        careerGoal: user.careerGoal,
+      });
+    } catch (error) {
+      console.error(error);
+
+      res.status(500).json({
+        message: "Unable to load resume analysis",
+      });
+    }
+  }
+);
+
+
+/* =========================
+   GENERATE CAREER INTELLIGENCE
+========================= */
+
+router.post(
+  "/career-intelligence/:id",
+
+  async (req, res) => {
+    try {
+      const user = await User.findById(
+        req.params.id
+      );
+
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+        });
+      }
+
+      if (
+        !user.careerGoal ||
+        !Array.isArray(user.skills) ||
+        user.skills.length === 0
+      ) {
+        return res.status(422).json({
+          message:
+            "Complete your Career Profile with a target role and skills before generating Career Intelligence.",
+        });
+      }
+
+      const intelligence =
+        generateCareerIntelligence(user);
+
+      user.careerIntelligence = intelligence;
+
+      await user.save();
+
+      res.json({
+        message:
+          "Career Intelligence generated.",
+
+        intelligence:
+          user.careerIntelligence,
+
+        user: serializeUser(user),
+      });
+    } catch (error) {
+      console.error(
+        "Career intelligence error:",
+        error
+      );
+
+      res.status(500).json({
+        message:
+          "Unable to generate Career Intelligence. Please try again.",
+      });
+    }
+  }
+);
+
+
+/* =========================
+   GET CAREER INTELLIGENCE
+========================= */
+
+router.get(
+  "/career-intelligence/:id",
+
+  async (req, res) => {
+    try {
+      const user = await User.findById(
+        req.params.id
+      ).select(
+        "careerIntelligence careerGoal skills careerInterests resumeAnalysis"
+      );
+
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+        });
+      }
+
+      res.json({
+        intelligence:
+          user.careerIntelligence || null,
+
+        context: {
+          careerGoal: user.careerGoal,
+          skills: user.skills,
+          careerInterests:
+            user.careerInterests,
+
+          hasResumeAnalysis: Boolean(
+            user.resumeAnalysis?.analyzedAt
+          ),
+        },
+      });
+    } catch (error) {
+      console.error(error);
+
+      res.status(500).json({
+        message:
+          "Unable to load Career Intelligence",
+      });
+    }
+  }
+);
+
 
 module.exports = router;

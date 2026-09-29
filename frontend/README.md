@@ -1,16 +1,62 @@
-# React + Vite
+# CareerUpAI Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This directory contains the React/Vite client for CareerUpAI.
 
-Currently, two official plugins are available:
+## Responsibilities
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+The frontend owns the user-facing career experience, including:
 
-## React Compiler
+- Public product pages
+- Authentication and demo flows
+- Career intelligence screens
+- Resume intelligence screens
+- Dashboard/workspace views
+- 3D and WebGL-oriented visual experiences
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Stack
 
-## Expanding the ESLint configuration
+- React 19
+- Vite 8
+- React Router 7
+- Tailwind CSS 4
+- JavaScript / JSX
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Run locally
+
+From this directory:
+
+```bash
+npm install
+npm run dev
+```
+
+## Available scripts
+
+```bash
+npm run dev      # Start the Vite development server
+npm run build    # Create a production build
+npm run lint     # Run ESLint
+npm run preview  # Preview the production build locally
+```
+
+## Source guide
+
+```text
+src/
+├── App.jsx                    Main application composition
+├── CareerIntelligence.jsx     Career intelligence experience
+├── ResumeIntelligence.jsx     Resume-focused intelligence experience
+├── Dashboard/                 Workspace/dashboard modules
+├── PublicPages.jsx            Public-facing product pages
+├── Home3D.jsx                 3D-oriented home experience
+├── WebGLExperience.jsx        WebGL visual experience
+├── LocalDemoWorkspace.jsx     Local demo workspace
+├── LocalDemoIntelligence.jsx  Demo intelligence flow
+└── auth/                      Authentication-related UI and logic
+```
+
+## Contribution rule
+
+Keep page-level experiences easy to find and avoid moving unrelated product logic into the main `App.jsx`. New features should live close to the product area they belong to and be wired into the app from there.
+
+For the overall product overview and backend context, see the repository-level [`README.md`](../README.md).
