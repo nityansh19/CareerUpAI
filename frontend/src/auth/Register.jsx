@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { apiUrl } from "../lib/api";
 
 const GOLD = "#D7B45A";
 const GOLD_LIGHT = "#F5DF9A";
@@ -136,7 +137,7 @@ function Register() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/users/register",
+        apiUrl("/api/users/register"),
         {
           method: "POST",
           headers: {
