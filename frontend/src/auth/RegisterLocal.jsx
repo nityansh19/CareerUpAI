@@ -1,12 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthShell from "./AuthShell";
-import { apiUrl, configuredApiUrl } from "../lib/api";
 import { createLocalDemoAccount } from "./localAccount";
-import { getStoredUser, isProfileReady, storeUser } from "./session";
+import { getStoredUser, storeUser } from "./session";
 import "./AuthStyles.css";
-
-const remoteAuthConfigured = Boolean(configuredApiUrl);
 
 export default function RegisterLocal() {
   const navigate = useNavigate();
@@ -14,40 +11,10 @@ export default function RegisterLocal() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [remoteAuthEnabled, setRemoteAuthEnabled] = useState(false);
-  const [checkingApi, setCheckingApi] = useState(remoteAuthConfigured);
 
   useEffect(() => {
     const existing = getStoredUser();
-    if (existing) {
-      navigate(isProfileReady(existing) ? "/dashboard" : "/onboarding", { replace: true });
-      return;
-    }
-
-    if (!remoteAuthConfigured) {
-      setCheckingApi(false);
-      return;
-    }
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-
-    fetch(apiUrl("/health"), { signal: controller.signal })
-      .then((response) => {
-        setRemoteAuthEnabled(response.ok);
-      })
-      .catch(() => {
-        setRemoteAuthEnabled(false);
-      })
-      .finally(() => {
-        clearTimeout(timeout);
-        setCheckingApi(false);
-      });
-
-    return () => {
-      clearTimeout(timeout);
-      controller.abort();
-    };
+    if (existing) navigate("/dashboard", { replace: true });
   }, [navigate]);
 
   const setField = (key, value) => setForm((current) => ({ ...current, [key]: value }));
@@ -58,33 +25,11 @@ export default function RegisterLocal() {
     setMessage("");
 
     try {
-      let user;
-
-      if (remoteAuthEnabled) {
-        const response = await fetch(apiUrl("/api/users/register"), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
-        });
-
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          throw new Error(data.message || "Unable to create your account.");
-        }
-
-        user = data.user;
-      } else {
-        user = await createLocalDemoAccount(form);
-      }
-
+      const user = await createLocalDemoAccount(form);
       storeUser(user);
-      navigate(remoteAuthEnabled ? "/onboarding" : "/dashboard", { replace: true });
+      navigate("/dashboard", { replace: true });
     } catch (error) {
-      if (error instanceof TypeError) {
-        setMessage("Cannot reach the CareerUp API. Check the deployed backend URL and try again.");
-      } else {
-        setMessage(error.message || (remoteAuthEnabled ? "Unable to create your account." : "Unable to create the local demo account."));
-      }
+      setMessage(error.message || "Unable to create the local CareerUp workspace.");
     } finally {
       setLoading(false);
     }
@@ -93,50 +38,91 @@ export default function RegisterLocal() {
   return (
     <AuthShell mode="register">
       <div className="inline-flex items-center gap-2 rounded-full border border-[#76d7c4]/15 bg-[#76d7c4]/[.04] px-3 py-1.5 text-[9px] uppercase tracking-[.18em] text-[#8be5d3]">
-        {remoteAuthEnabled ? "Secure account setup" : "Local demo mode · No server required"}
+        Local testing mode · No backend
       </div>
-      <h1 className="mt-5 text-3xl font-semibold leading-[1.1] tracking-[-.04em] sm:text-4xl">{remoteAuthEnabled ? "Create your CareerUp workspace." : "Create your CareerUp demo workspace."}</h1>
-      <p className="mt-4 text-sm leading-7 text-white/36">{remoteAuthEnabled ? "Create an account, complete your Career Profile and continue into your persistent CareerUp workspace." : "Your account is created only in this browser. CareerUp will load a clearly marked sample Career Profile, Resume Intelligence report and Career Intelligence matches so you can explore the product immediately."}</p>
 
-      {!checkingApi && remoteAuthConfigured && !remoteAuthEnabled && !message && <div className="mt-6 rounded-2xl border border-amber-300/15 bg-amber-300/[.05] px-4 py-3 text-xs leading-6 text-amber-100/70">The online API is unavailable, so CareerUp switched to local demo mode instead of blocking account access.</div>}
+      <h1 className="mt-5 text-3xl font-semibold leading-[1.1] tracking-[-.04em] sm:text-4xl">
+        Create your CareerUp testing workspace.
+      </h1>
+      <p className="mt-4 text-sm leading-7 text-white/36">
+        Your account, profile and testing data are stored only in this browser so you can explore the complete product without a server.
+      </p>
 
       {message && <div className="mt-6 rounded-2xl border border-rose-400/15 bg-rose-400/[.05] px-4 py-3 text-sm leading-6 text-rose-200/80">{message}</div>}
 
       <form onSubmit={submit} className="mt-6 space-y-4">
         <label className="block">
           <span className="mb-2 block text-xs font-medium text-white/46">Full name</span>
-          <input value={form.name} onChange={(event) => setField("name", event.target.value)} required autoComplete="name" placeholder="Your full name" className="auth-input rounded-2xl px-4 py-3.5 text-sm text-white placeholder:text-white/18" />
+          <input
+            value={form.name}
+            onChange={(event) => setField("name", event.target.value)}
+            required
+            autoComplete="name"
+            placeholder="Your full name"
+            className="auth-input rounded-2xl px-4 py-3.5 text-sm text-white placeholder:text-white/18"
+          />
         </label>
 
         <label className="block">
           <span className="mb-2 block text-xs font-medium text-white/46">Email</span>
-          <input type="email" value={form.email} onChange={(event) => setField("email", event.target.value)} required autoComplete="email" placeholder="you@example.com" className="auth-input rounded-2xl px-4 py-3.5 text-sm text-white placeholder:text-white/18" />
+          <input
+            type="email"
+            value={form.email}
+            onChange={(event) => setField("email", event.target.value)}
+            required
+            autoComplete="email"
+            placeholder="you@example.com"
+            className="auth-input rounded-2xl px-4 py-3.5 text-sm text-white placeholder:text-white/18"
+          />
         </label>
 
         <label className="block">
-          <div className="mb-2 flex items-center justify-between"><span className="text-xs font-medium text-white/46">Password</span><span className="text-[10px] text-white/20">6+ characters</span></div>
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs font-medium text-white/46">Password</span>
+            <span className="text-[10px] text-white/20">6+ characters</span>
+          </div>
           <div className="relative">
-            <input type={showPassword ? "text" : "password"} value={form.password} onChange={(event) => setField("password", event.target.value)} required minLength="6" autoComplete="new-password" placeholder={remoteAuthEnabled ? "Create a secure password" : "Create a local demo password"} className="auth-input rounded-2xl px-4 py-3.5 pr-20 text-sm text-white placeholder:text-white/18" />
-            <button type="button" onClick={() => setShowPassword((value) => !value)} className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-white/30 transition hover:text-white">{showPassword ? "Hide" : "Show"}</button>
+            <input
+              type={showPassword ? "text" : "password"}
+              value={form.password}
+              onChange={(event) => setField("password", event.target.value)}
+              required
+              minLength={6}
+              autoComplete="new-password"
+              placeholder="Create a local password"
+              className="auth-input rounded-2xl px-4 py-3.5 pr-20 text-sm text-white placeholder:text-white/18"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((value) => !value)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-white/30 transition hover:text-white"
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
           </div>
         </label>
 
-        <button disabled={loading || checkingApi} className="auth-primary w-full rounded-2xl bg-[#f0d481] px-5 py-3.5 text-sm font-semibold text-[#11131a] transition hover:-translate-y-0.5 hover:bg-[#f5dc92] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0">
-          <span className="relative z-10">{checkingApi ? "Checking CareerUp service…" : loading ? (remoteAuthEnabled ? "Creating account…" : "Preparing demo workspace…") : (remoteAuthEnabled ? "Create CareerUp account" : "Create local demo & explore")}</span>
+        <button
+          disabled={loading}
+          className="auth-primary w-full rounded-2xl bg-[#f0d481] px-5 py-3.5 text-sm font-semibold text-[#11131a] transition hover:-translate-y-0.5 hover:bg-[#f5dc92] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+        >
+          <span className="relative z-10">{loading ? "Preparing workspace…" : "Create local workspace"}</span>
         </button>
       </form>
 
       <div className="mt-6 rounded-2xl border border-white/[.06] bg-white/[.02] p-4">
-        <p className="text-[9px] uppercase tracking-[.18em] text-white/22">{remoteAuthEnabled ? "Your CareerUp workspace" : "Explore immediately"}</p>
+        <p className="text-[9px] uppercase tracking-[.18em] text-white/22">Available immediately</p>
         <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px] text-white/35">
           <span className="rounded-xl bg-white/[.025] px-2 py-2.5">Dashboard</span>
           <span className="rounded-xl bg-white/[.025] px-2 py-2.5">Resume AI</span>
           <span className="rounded-xl bg-white/[.025] px-2 py-2.5">Career AI</span>
         </div>
-        <p className="mt-3 text-[10px] leading-5 text-white/20">{remoteAuthEnabled ? "Your account is saved by the CareerUp backend so you can return to the same workspace later." : "Demo credentials and product data stay on this browser. This is not production authentication and no account is created on a server."}</p>
       </div>
 
-      <p className="mt-6 text-center text-xs text-white/30">{remoteAuthEnabled ? "Already have an account?" : "Already created a local demo?"} <Link to="/login" className="font-medium text-[#efd080] transition hover:text-white">Sign in</Link></p>
+      <p className="mt-6 text-center text-xs text-white/30">
+        Already have a local workspace?{" "}
+        <Link to="/login" className="font-medium text-[#efd080] transition hover:text-white">Sign in</Link>
+      </p>
     </AuthShell>
   );
 }
