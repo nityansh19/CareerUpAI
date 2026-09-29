@@ -1,3 +1,4 @@
+import { readPractice, savePractice } from "./browserStorage";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { clearStoredUser, getStoredUser, storeUser } from "../auth/session";
@@ -102,20 +103,26 @@ const QUESTIONS = {
 };
 export function InterviewPage() {
   const user = getStoredUser() || {};
-  const [role, setRole] = useState(user.careerGoal || "Software Developer");
-  const [type, setType] = useState("Mixed");
-  const [difficulty, setDifficulty] = useState("Standard");
-  const [started, setStarted] = useState(false);
-  const [step, setStep] = useState(0);
-  const [answer, setAnswer] = useState("");
-  const [answers, setAnswers] = useState([]);
+  const [practice, setPractice] = useState(() => readPractice(user.id) || {
+    role: user.careerGoal || "Software Developer", type: "Mixed", difficulty: "Standard",
+    started: false, step: 0, answer: "", answers: [],
+  });
+  const { role, type, difficulty, started, step, answer, answers } = practice;
+  const [storageMessage, setStorageMessage] = useState("");
+  const updatePractice = (patch) => {
+    const next = { ...practice, ...patch };
+    setPractice(next);
+    try { savePractice(user.id, next); setStorageMessage(""); }
+    catch (error) { setStorageMessage(error.message); }
+  };
   const questions = QUESTIONS[difficulty][type];
-  const next = () => { const updated = [...answers,answer.trim()]; setAnswers(updated); setAnswer(""); setStep(step + 1); };
+  const next = () => updatePractice({ answers: [...answers, answer.trim()], answer: "", step: step + 1 });
   return <>
     {user.isLocalDemo && <DemoBanner/>}
     <PageHeader eyebrow="PREPARE / INTERVIEW" title="Interview practice" description="Build confidence through a short, focused practice session."/>
-    <div className="ws-demo-banner"><span className="ws-demo-dot"/><span>This is guided practice with fixed prompts. Automated AI feedback is not available yet.</span></div>
-    {!started ? <div className="ws-card ws-panel" style={{maxWidth:660}}><h2>Set up your session</h2><p>Three questions, one at a time. Choose a role and the kind of practice you need.</p><div className="ws-form-grid" style={{marginTop:18}}><label className="ws-field ws-span-two">Role<input value={role} onChange={(event) => setRole(event.target.value)}/></label><label className="ws-field">Interview type<select value={type} onChange={(event) => setType(event.target.value)}>{Object.keys(QUESTIONS.Standard).map((item) => <option key={item}>{item}</option>)}</select></label><label className="ws-field">Difficulty<select value={difficulty} onChange={(event) => setDifficulty(event.target.value)}><option>Foundations</option><option>Standard</option><option>Advanced</option></select></label></div><button className="ws-btn ws-btn-primary" style={{marginTop:20}} onClick={() => { setStarted(true); setStep(0); setAnswers([]); }}>Start practice <Icon name="arrow" size={15}/></button></div> : step < questions.length ? <div className="ws-card ws-panel" style={{maxWidth:760}}><p className="ws-section-kicker">QUESTION {step+1} OF {questions.length} · {role || "YOUR ROLE"} · {difficulty.toUpperCase()}</p><h2 style={{fontSize:20,marginTop:17}}>{questions[step]}</h2><p>Write a few notes or answer out loud. Move on when you are ready.</p><label className="ws-field" style={{marginTop:23}}>Your notes<textarea value={answer} onChange={(event) => setAnswer(event.target.value)} rows={6} placeholder="Outline your answer here (optional)"/></label><button className="ws-btn ws-btn-primary" style={{marginTop:18}} onClick={next}>{step === questions.length-1 ? "Finish practice" : "Next question"} <Icon name="arrow" size={15}/></button></div> : <div className="ws-card ws-panel" style={{maxWidth:760}}><p className="ws-section-kicker">SESSION COMPLETE</p><h2 style={{fontSize:20,marginTop:10}}>You completed 3 questions</h2><p>Review your notes and refine one answer before your next session. No automated performance score was calculated.</p><div className="ws-list">{questions.map((question,index) => <div className="ws-row" key={question}><div><strong>{question}</strong><p style={{margin:"5px 0 0"}}>{answers[index] || "No written notes"}</p></div></div>)}</div><div style={{display:"flex",gap:9,marginTop:18}}><button className="ws-btn ws-btn-primary" onClick={() => {setStep(0);setAnswers([]);}}>Try again</button><button className="ws-btn" onClick={() => setStarted(false)}>Change setup</button></div></div>}
+    <div className="ws-demo-banner"><span className="ws-demo-dot"/><span>Your progress and notes are saved in this browser. This is guided practice with fixed prompts; automated AI feedback is not available yet.</span></div>
+    {storageMessage && <p className="ws-message" role="alert">{storageMessage}</p>}
+    {!started ? <div className="ws-card ws-panel" style={{maxWidth:660}}><h2>Set up your session</h2><p>Three questions, one at a time. Choose a role and the kind of practice you need.</p><div className="ws-form-grid" style={{marginTop:18}}><label className="ws-field ws-span-two">Role<input value={role} onChange={(event) => updatePractice({ role: event.target.value })}/></label><label className="ws-field">Interview type<select value={type} onChange={(event) => updatePractice({ type: event.target.value })}>{Object.keys(QUESTIONS.Standard).map((item) => <option key={item}>{item}</option>)}</select></label><label className="ws-field">Difficulty<select value={difficulty} onChange={(event) => updatePractice({ difficulty: event.target.value })}><option>Foundations</option><option>Standard</option><option>Advanced</option></select></label></div><button className="ws-btn ws-btn-primary" style={{marginTop:20}} onClick={() => updatePractice({ started: true, step: 0, answers: [], answer: "" })}>Start practice <Icon name="arrow" size={15}/></button></div> : step < questions.length ? <div className="ws-card ws-panel" style={{maxWidth:760}}><p className="ws-section-kicker">QUESTION {step+1} OF {questions.length} · {role || "YOUR ROLE"} · {difficulty.toUpperCase()}</p><h2 style={{fontSize:20,marginTop:17}}>{questions[step]}</h2><p>Write a few notes or answer out loud. Move on when you are ready.</p><label className="ws-field" style={{marginTop:23}}>Your notes<textarea value={answer} onChange={(event) => updatePractice({ answer: event.target.value })} rows={6} placeholder="Outline your answer here (optional)"/></label><button className="ws-btn ws-btn-primary" style={{marginTop:18}} onClick={next}>{step === questions.length-1 ? "Finish practice" : "Next question"} <Icon name="arrow" size={15}/></button></div> : <div className="ws-card ws-panel" style={{maxWidth:760}}><p className="ws-section-kicker">SESSION COMPLETE</p><h2 style={{fontSize:20,marginTop:10}}>You completed 3 questions</h2><p>Review your notes and refine one answer before your next session. No automated performance score was calculated.</p><div className="ws-list">{questions.map((question,index) => <div className="ws-row" key={question}><div><strong>{question}</strong><p style={{margin:"5px 0 0"}}>{answers[index] || "No written notes"}</p></div></div>)}</div><div style={{display:"flex",gap:9,marginTop:18}}><button className="ws-btn ws-btn-primary" onClick={() => updatePractice({ step: 0, answers: [], answer: "" })}>Try again</button><button className="ws-btn" onClick={() => updatePractice({ started: false })}>Change setup</button></div></div>}
   </>;
 }
 
@@ -123,5 +130,5 @@ export function SettingsPage() {
   const user = getStoredUser() || {};
   const navigate = useNavigate();
   const logout = () => { clearStoredUser(); navigate("/",{replace:true}); };
-  return <><PageHeader eyebrow="ACCOUNT" title="Settings" description="Your account and workspace details."/><div className="ws-card ws-panel" style={{maxWidth:640}}><div className="ws-row"><div><strong>Account</strong><div><small>{user.email}</small></div></div><Link className="ws-btn" to="/profile">Edit profile</Link></div><div className="ws-row"><div><strong>Data mode</strong><div><small>{"Local testing · browser storage only"}</small></div></div></div><div className="ws-row"><div><strong>Quick actions</strong><div><small>Press Ctrl / Cmd + K anywhere in the workspace</small></div></div></div><div className="ws-row"><div><strong>Session</strong><div><small>Sign out on this device</small></div></div><button onClick={logout} className="ws-btn"><Icon name="logout" size={15}/> Sign out</button></div></div></>;
+  return <><PageHeader eyebrow="ACCOUNT" title="Settings" description="Your account and workspace details."/><div className="ws-card ws-panel" style={{maxWidth:640}}><div className="ws-row"><div><strong>Account</strong><div><small>{user.email}</small></div></div><Link className="ws-btn" to="/profile">Edit profile</Link></div><div className="ws-row"><div><strong>Data mode</strong><div><small>{"Saved on this browser · no cross-device sync"}</small></div></div></div><div className="ws-row"><div><strong>Quick actions</strong><div><small>Press Ctrl / Cmd + K anywhere in the workspace</small></div></div></div><div className="ws-row"><div><strong>Session</strong><div><small>Sign out on this device</small></div></div><button onClick={logout} className="ws-btn"><Icon name="logout" size={15}/> Sign out</button></div></div></>;
 }

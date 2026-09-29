@@ -1,3 +1,4 @@
+import { readResume, saveResume } from "./browserStorage";
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { getStoredUser, storeUser } from "../auth/session";
@@ -29,10 +30,11 @@ export function ResumePage() {
     if (file.type !== "application/pdf") { setMessage("Choose a PDF resume to continue."); return; }
     setLoading(true); setMessage("");
     try {
+      await saveResume(user.id, file);
       const base = { ...user, isLocalDemo: true, demoWorkspace: true, cvOriginalName: file.name, cvFile: `local-demo:${file.name}` };
       const resumeAnalysis = buildDemoResumeAnalysis(base, file.name);
       const next = { ...base, resumeAnalysis, careerIntelligence: buildDemoCareerIntelligence({ ...base, resumeAnalysis }) };
-      setMessage("Local testing report updated from your profile. No file was sent to a server.");
+      setMessage("PDF saved on this device. The preview report uses your profile, not the PDF contents. No file was sent to a server.");
       localStorage.setItem("careerup_cv_name", next.cvOriginalName || file.name);
       storeUser(next); setUser(next); setTab("Overview");
     } catch (error) { setMessage(error.message || "Unable to analyze your resume."); }
@@ -44,6 +46,7 @@ export function ResumePage() {
     if (file.type !== "application/pdf") { setMessage("Choose a PDF resume to continue."); return; }
     setLoading(true); setMessage("");
     try {
+      await saveResume(user.id, file);
       const next = {
         ...user,
         isLocalDemo: true,
@@ -55,16 +58,29 @@ export function ResumePage() {
       };
       storeUser(next); setUser(next); setTab("Overview");
       localStorage.setItem("careerup_cv_name", file.name);
-      setMessage("Resume connected locally. Analyze it whenever you are ready.");
+      setMessage("PDF saved in this browser. You can download it here on your next visit.");
     } catch (error) { setMessage(error.message || "Unable to connect your resume."); }
     finally { setLoading(false); }
+  };
+
+  const download = async () => {
+    setMessage("");
+    try {
+      const file = await readResume(user.id);
+      if (!file) throw new Error("This resume was not saved on this device. Choose the PDF again to save it.");
+      const url = URL.createObjectURL(file);
+      const link = document.createElement("a");
+      link.href = url; link.download = file.name || "resume.pdf";
+      document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) { setMessage(error.message || "Unable to open the saved resume."); }
   };
 
   return <>
     {demo && <DemoBanner/>}
     <PageHeader eyebrow="PREPARE / RESUME" title="Resume" description="See what your resume communicates and improve one thing at a time." action={<button className="ws-btn ws-btn-primary" disabled={loading} onClick={() => inputRef.current?.click()}><Icon name="file" size={16}/>{loading ? "Analyzing…" : analysis ? "Analyze another PDF" : "Upload & analyze PDF"}</button>}/>
     {message && <p className="ws-message" role="status">{message}</p>}
-    <div className="ws-card ws-panel ws-panel-header"><div><p className="ws-section-kicker">CURRENT RESUME</p><h2 style={{marginTop:8}}>{fileName || "No resume connected yet"}</h2><p>{"Local testing report stored in this browser"}</p><button type="button" disabled={loading} onClick={() => uploadRef.current?.click()} style={{border:0,background:"none",padding:0,marginTop:7,fontSize:11,color:"#b6aaff"}}>Connect a PDF locally without analysis</button></div>{analysis && <div className="ws-score">{analysis.overallScore}<small>/ 100</small></div>}</div>
+    <div className="ws-card ws-panel ws-panel-header"><div><p className="ws-section-kicker">CURRENT RESUME</p><h2 style={{marginTop:8}}>{fileName || "No resume connected yet"}</h2><p>{"Local testing report stored in this browser"}</p><button type="button" disabled={loading} onClick={() => uploadRef.current?.click()} style={{border:0,background:"none",padding:0,marginTop:7,fontSize:11,color:"#b6aaff"}}>Connect a PDF locally without analysis</button>{fileName && <button type="button" className="ws-btn" disabled={loading} onClick={download} style={{marginTop:12}}>Download saved PDF</button>}</div>{analysis && <div className="ws-score">{analysis.overallScore}<small>/ 100</small></div>}</div>
     {!analysis ? <div style={{marginTop:16}}><EmptyState icon="file" title="Start with your resume" description="Upload a text based PDF to see structure, skill coverage, and targeted suggestions. Scanned image PDFs may not contain readable text." action={<button className="ws-btn ws-btn-primary" onClick={() => inputRef.current?.click()}>Choose PDF <Icon name="arrow" size={15}/></button>}/></div> : <>
       <div className="ws-tabs" role="tablist" aria-label="Resume report">{["Overview", "Suggestions", "Details"].map((item) => <button role="tab" aria-selected={tab === item} className={tab === item ? "active" : ""} key={item} onClick={() => setTab(item)}>{item}</button>)}</div>
       {tab === "Overview" && <div className="ws-grid-two"><section className="ws-card ws-panel"><h2>Resume strength</h2><p>A quick view of the latest analysis.</p><ScoreBars analysis={analysis}/></section><section className="ws-card ws-panel"><h2>Your next improvement</h2><p>Start with the first recommendation, then work through the rest.</p><List items={(analysis.recommendations || []).slice(0, 2)} empty="No recommendations yet."/><button className="ws-btn" style={{marginTop:14}} onClick={() => setTab("Suggestions")}>View all suggestions <Icon name="arrow" size={14}/></button></section></div>}

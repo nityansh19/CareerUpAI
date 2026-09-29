@@ -57,6 +57,18 @@ The frontend contains the public pages, dashboards, career intelligence, resume 
 
 ## Run locally
 
+### Browser data storage
+
+The active workspace saves accounts, profiles, job applications, interview notes and
+progress, and preview reports in this browser. Uploaded PDFs (up to 5 MB) are stored
+in IndexedDB and can be downloaded from the Resume page after reopening the app.
+These workspace flows do not require a backend or send their data to a server.
+
+Data belongs to this browser and site address; it does not sync between devices.
+Signing out keeps saved data. Clearing site data removes it, and private browsing
+may discard it when the session ends. Resume preview reports use profile data,
+not the contents of the saved PDF. The separate legacy backend remains optional.
+
 ### Frontend
 
 ```bash
