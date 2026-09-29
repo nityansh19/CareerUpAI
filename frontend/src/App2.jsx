@@ -9,9 +9,7 @@ import { CareerPage, ResumePage } from "./workspace/IntelligencePages";
 import { InterviewPage, JobsPage, ProfilePage, SettingsPage, SkillsPage } from "./workspace/ModulePages";
 import LoginLocal from "./auth/LoginLocal";
 import RegisterLocal from "./auth/RegisterLocal";
-import Onboarding from "./auth/Onboarding";
-import { isLocalDemoUser } from "./auth/localAccount";
-import { getStoredUser, isProfileReady } from "./auth/session";
+import { getStoredUser } from "./auth/session";
 import PerformanceStyles from "./performance/PerformanceStyles";
 
 function LandingPage() {
@@ -26,22 +24,12 @@ function LandingPage() {
 
 function GuestOnlyRoute({ children }) {
   const user = getStoredUser();
-  if (!user) return children;
-  return <Navigate to={isProfileReady(user) ? "/dashboard" : "/onboarding"} replace />;
-}
-
-function OnboardingRoute() {
-  const user = getStoredUser();
-  if (!user) return <Navigate to="/login" replace />;
-  if (isLocalDemoUser(user)) return <Navigate to="/dashboard" replace />;
-  if (isProfileReady(user)) return <Navigate to="/dashboard" replace />;
-  return <Onboarding />;
+  return user ? <Navigate to="/dashboard" replace /> : children;
 }
 
 function WorkspaceRoute({ children }) {
   const user = getStoredUser();
   if (!user) return <Navigate to="/login" replace />;
-  if (!isLocalDemoUser(user) && !isProfileReady(user)) return <Navigate to="/onboarding" replace />;
   return <WorkspaceShell user={user}>{children}</WorkspaceShell>;
 }
 
@@ -71,7 +59,7 @@ export default function App2() {
         <Route path="/about" element={<PublicPage type="about" />} />
         <Route path="/login" element={<GuestOnlyRoute><LoginLocal /></GuestOnlyRoute>} />
         <Route path="/register" element={<GuestOnlyRoute><RegisterLocal /></GuestOnlyRoute>} />
-        <Route path="/onboarding" element={<OnboardingRoute />} />
+        <Route path="/onboarding" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<WorkspaceRoute><HomeDashboard /></WorkspaceRoute>} />
         <Route path="/jobs" element={<WorkspaceRoute><JobsPage /></WorkspaceRoute>} />
         <Route path="/interview" element={<WorkspaceRoute><InterviewPage /></WorkspaceRoute>} />
