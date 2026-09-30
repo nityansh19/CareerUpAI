@@ -1,0 +1,34 @@
+services:
+  # Added: describe the standalone backend service; Netlify continues hosting the frontend.
+  - type: web
+    # Added: run Express as a public web service.
+    name: careerupai-api
+    # Added: name the backend independently of the Netlify site.
+    runtime: node
+    # Added: use Render's managed Node runtime.
+    plan: free
+    # Added: explicitly select the free compute plan for initial setup.
+    rootDir: backend
+    # Added: install and run from the backend folder in this repository.
+    buildCommand: npm ci --omit=dev
+    # Added: install production dependencies from the existing lockfile.
+    startCommand: npm start
+    # Added: start the existing Express entry point.
+    healthCheckPath: /health
+    # Added: require the existing endpoint to report a working database connection.
+    autoDeployTrigger: off
+    # Added: keep deployments manual until the frontend integration and authentication work is reviewed.
+    envVars:
+      # Added: configure non-secret values here and enter the database secret privately in Render.
+      - key: NODE_VERSION
+        value: 24.19.0
+        # Added: pin the Node version used for local verification.
+      - key: NODE_ENV
+        value: production
+        # Added: enable production database configuration checks.
+      - key: FRONTEND_URL
+        value: https://careerupai.netlify.app
+        # Added: allow the existing Netlify frontend origin.
+      - key: MONGODB_URI
+        sync: false
+        # Added: request the Atlas connection string during setup instead of committing credentials.

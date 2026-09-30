@@ -57,17 +57,20 @@ The frontend contains the public pages, dashboards, career intelligence, resume 
 
 ## Run locally
 
-### Browser data storage
+### Online accounts and storage
 
-The active workspace saves accounts, profiles, job applications, interview notes and
-progress, and preview reports in this browser. Uploaded PDFs (up to 5 MB) are stored
-in IndexedDB and can be downloaded from the Resume page after reopening the app.
-These workspace flows do not require a backend or send their data to a server.
+The active workspace uses an authenticated backend for profiles, job applications,
+interview practice, reports and uploaded PDFs. Sign in with the same cloud account
+on another device and reload to get the latest saved data. Resume and career
+reports use rule-based analysis, not an external AI model.
 
-Data belongs to this browser and site address; it does not sync between devices.
-Signing out keeps saved data. Clearing site data removes it, and private browsing
-may discard it when the session ends. Resume preview reports use profile data,
-not the contents of the saved PDF. The separate legacy backend remains optional.
+Earlier browser-only accounts and data remain on their original device. They are
+not automatically imported into cloud accounts. Create a cloud account to use the
+online workspace.
+
+Follow [Cloud deployment](docs/CLOUD_DEPLOYMENT.md) to configure Render, MongoDB
+Atlas and Netlify. Production builds require VITE_API_URL; deployment is incomplete
+until those services and settings are configured and verified.
 
 ### Frontend
 

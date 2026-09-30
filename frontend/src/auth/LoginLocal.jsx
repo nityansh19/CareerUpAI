@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthShell from "./AuthShell";
-import { openLocalWorkspace } from "./localAccount";
+import { login } from "../cloud/account";
+// Changed: sign in against the cloud API instead of creating a browser-only workspace.
 import { getStoredUser, storeUser } from "./session";
 import "./AuthStyles.css";
 
@@ -24,11 +25,13 @@ export default function LoginLocal() {
     setMessage("");
 
     try {
-      const user = await openLocalWorkspace(email, password);
+      const user = await login(email, password);
+      // Changed: require verified credentials and fetch the shared online account.
       storeUser(user);
       navigate("/dashboard", { replace: true });
     } catch (error) {
-      setMessage(error.message || "Unable to open your local CareerUp workspace.");
+      setMessage(error.message || "Unable to sign in to CareerUp.");
+      // Changed: describe failures for online sign-in.
     } finally {
       setLoading(false);
     }
@@ -37,12 +40,14 @@ export default function LoginLocal() {
   return (
     <AuthShell mode="login">
       <div className="inline-flex items-center gap-2 rounded-full border border-[#76d7c4]/15 bg-[#76d7c4]/[.04] px-3 py-1.5 text-[9px] uppercase tracking-[.18em] text-[#8be5d3]">
-        <span className="auth-live-dot h-1.5 w-1.5 rounded-full bg-[#76d7c4]" /> Local testing access
+        <span className="auth-live-dot h-1.5 w-1.5 rounded-full bg-[#76d7c4]" /> Your online workspace
+        {/* Changed: identify the shared cloud account flow. */}
       </div>
 
       <h2 className="mt-5 text-3xl font-semibold leading-[1.1] tracking-[-.04em] sm:text-4xl">Welcome back.</h2>
       <p className="mt-4 text-sm leading-7 text-white/36">
-        Everything is stored only in this browser for the testing phase. No backend or database connection is used.
+        Sign in to access your profile, jobs, interview notes and saved resume on any device.
+        {/* Changed: explain cross-device access through the backend. */}
       </p>
 
       {message && <div className="mt-6 rounded-2xl border border-rose-400/15 bg-rose-400/[.05] px-4 py-3 text-sm leading-6 text-rose-200/80">{message}</div>}
@@ -71,7 +76,8 @@ export default function LoginLocal() {
               required
               minLength={6}
               autoComplete="current-password"
-              placeholder="Enter your local testing password"
+              placeholder="Enter your password"
+              // Changed: remove the obsolete local-testing password label.
               className="auth-input rounded-2xl px-4 py-3.5 pr-20 text-sm text-white placeholder:text-white/18"
             />
             <button
@@ -93,11 +99,13 @@ export default function LoginLocal() {
       </form>
 
       <div className="mt-6 rounded-2xl border border-white/[.06] bg-white/[.02] p-4 text-[10px] leading-5 text-white/22">
-        On the first login in this browser, CareerUp automatically creates a local testing workspace. Your changes stay on this device until browser storage is cleared.
+        New here? Create an account first. Previous browser-only workspaces remain on their original device and are not uploaded automatically.
+        {/* Changed: make registration and the existing-data migration boundary explicit. */}
       </div>
 
       <p className="mt-6 text-center text-xs text-white/30">
-        Prefer to create the local account first?{" "}
+        Need an account?{" "}
+        {/* Changed: link to cloud registration. */}
         <Link to="/register" className="font-medium text-[#efd080] transition hover:text-white">Create one</Link>
       </p>
     </AuthShell>

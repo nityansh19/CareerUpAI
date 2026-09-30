@@ -1,30 +1,13 @@
-import { isLocalDemoUser, LOCAL_USER_KEY } from "./localAccount";
-import { createDemoWorkspaceUser } from "../demoIntelligence";
+import { api, TOKEN_KEY } from "../cloud/api";
+// Changed: use authenticated cloud sessions without converting server accounts to demo accounts.
 
-export const SESSION_KEY = "user";
-
-function migrateToLocal(user) {
-  if (!user?.id || !user?.email) return null;
-  if (isLocalDemoUser(user)) return user;
-
-  const localId = `local-${user.id}`;
-  const defaults = createDemoWorkspaceUser({
-    id: localId,
-    name: user.name || "CareerUp Tester",
-    email: user.email,
-  });
-
-  return {
-    ...defaults,
-    ...user,
-    id: localId,
-    isLocalDemo: true,
-    demoWorkspace: true,
-  };
-}
+export const SESSION_KEY = "careerup_cloud_user_v1";
+// Changed: isolate the cloud cache so existing browser-only data remains intact for manual migration.
 
 export function getStoredUser() {
   try {
+    if (!localStorage.getItem(TOKEN_KEY)) return null;
+    // Added: a cached profile alone cannot create a cloud session.
     const raw = localStorage.getItem(SESSION_KEY);
     if (!raw) return null;
 
@@ -34,15 +17,8 @@ export function getStoredUser() {
       return null;
     }
 
-    const user = migrateToLocal(parsed);
-    if (!user) return null;
-
-    if (!isLocalDemoUser(parsed)) {
-      localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-      localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(user));
-    }
-
-    return user;
+    return parsed;
+    // Changed: preserve the authenticated account ID and cloud data exactly as returned by the API.
   } catch {
     clearStoredUser();
     return null;
@@ -51,22 +27,26 @@ export function getStoredUser() {
 
 export function storeUser(user) {
   if (!user?.id || !user?.email) return;
-  const localUser = migrateToLocal(user) || user;
-  localStorage.setItem(SESSION_KEY, JSON.stringify(localUser));
-  localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(localUser));
+  localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+  window.dispatchEvent(new Event("careerup:user-updated"));
+  // Changed: cache confirmed cloud data and refresh account displays without altering legacy local records.
 }
 
 export function updateStoredUser(patch) {
   const current = getStoredUser();
   if (!current) return null;
-  const next = { ...current, ...patch, isLocalDemo: true, demoWorkspace: true };
+  const next = { ...current, ...patch };
+  // Changed: stop marking updated cloud profiles as local demos; this helper updates only the cache.
   storeUser(next);
   return next;
 }
 
 export function clearStoredUser() {
+  if (localStorage.getItem(TOKEN_KEY)) void api("/logout", { method: "POST" }).catch(() => {});
+  localStorage.removeItem(TOKEN_KEY);
+  // Added: revoke the online session when reachable and always remove the local bearer token.
   localStorage.removeItem(SESSION_KEY);
-  localStorage.removeItem("careerup_cv_name");
+  // Changed: clear only cloud session data and preserve the earlier browser workspace.
 }
 
 export function isProfileReady(user = getStoredUser()) {
