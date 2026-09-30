@@ -39,7 +39,10 @@ merging this branch into the frontend's production branch.
    backend HTTPS origin, with no `/api` suffix. This is public configuration;
    never put MongoDB credentials in any `VITE_` variable.
 2. Preview this branch with the variable configured, verify the flows below, then
-   merge and rebuild the production frontend. A build fails if the address is
+   merge and rebuild the production frontend. To test a Netlify deploy preview,
+   add its actual origin to Render's FRONTEND_URL as a comma-separated second
+   value alongside https://careerupai.netlify.app, then redeploy the backend.
+   Remove the preview origin after verification. A build fails if the address is
    missing, uses HTTP, points to localhost or includes an API path.
 3. Frontend API calls now use `/api/account`. The previous unauthenticated
    `/api/users` and `/api/resume-analysis` routes deliberately return HTTP 410.
@@ -111,3 +114,4 @@ References: [Render Blueprints](https://render.com/docs/blueprint-spec),
 [Render web services](https://render.com/docs/web-services),
 [Render free services](https://render.com/docs/free),
 [Atlas network access](https://www.mongodb.com/docs/atlas/security/ip-access-list/).
+
