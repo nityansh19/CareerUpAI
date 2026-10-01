@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 export default function ProductionCopy() {
   useEffect(() => {
-    document.title = "CareerUp AI — Career Intelligence, Resume Analysis & Roadmaps";
+    document.title = "CareerUpAI — Career Intelligence, Resume Analysis & Roadmaps";
 
     let description = document.querySelector('meta[name="description"]');
     if (!description) {
@@ -12,7 +12,7 @@ export default function ProductionCopy() {
     }
 
     description.content =
-      "CareerUp AI connects your resume, skills and goals into one intelligent career profile, helping you understand role readiness, skill gaps and personalized next steps.";
+      "CareerUpAI connects your resume, skills and goals into one intelligent career profile, helping you understand role readiness, skill gaps and personalized next steps.";
   }, []);
 
   return null;
