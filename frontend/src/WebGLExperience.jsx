@@ -63,7 +63,7 @@ function createShader(gl, type, source) {
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    console.warn("CareerUp WebGL shader error:", gl.getShaderInfoLog(shader));
+    console.warn("CareerUpAI WebGL shader error:", gl.getShaderInfoLog(shader));
     gl.deleteShader(shader);
     return null;
   }
@@ -83,7 +83,7 @@ function createProgram(gl) {
   gl.deleteShader(fragment);
 
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    console.warn("CareerUp WebGL link error:", gl.getProgramInfoLog(program));
+    console.warn("CareerUpAI WebGL link error:", gl.getProgramInfoLog(program));
     gl.deleteProgram(program);
     return null;
   }
