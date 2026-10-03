@@ -4,7 +4,7 @@ CareerUpAI is an AI-focused career platform designed to bring career planning, r
 
 ## Live deployment
 
-**Live website:** https://career-up-ai-delta.vercel.app/
+[**Open CareerUpAI Live →**](https://career-up-ai-delta.vercel.app/)
 
 The frontend is deployed on Vercel. The project is actively being connected to the hosted CareerUp AI backend.
 
