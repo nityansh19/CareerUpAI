@@ -3,10 +3,13 @@ import { Link } from "react-router-dom";
 import { Arrow, CheckIcon, IntelligenceCore, Spark } from "./landing/LandingUI";
 import CompactLanding from "./landing/CompactLanding";
 import "./landing/LandingStyles.css";
+import MotionRegion from "./components/MotionRegion";
 
 function Header({ scrolled, menu, setMenu }) {
   return (
-    <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${scrolled ? "pt-3" : "pt-5"}`}>
+    <header
+      className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${scrolled ? "pt-3" : "pt-5"}`}
+    >
       <div
         className={`mx-auto flex w-[min(94%,1180px)] items-center justify-between rounded-2xl border px-4 py-3 transition-all duration-500 sm:px-5 ${
           scrolled
@@ -20,23 +23,65 @@ function Header({ scrolled, menu, setMenu }) {
             C
           </span>
           <div className="leading-none">
-            <span className="block text-sm font-semibold tracking-[-.02em]">CareerUpAI</span>
-            <span className="mt-1 block text-[9px] uppercase tracking-[.22em] text-white/28">AI career intelligence</span>
+            <span className="block text-sm font-semibold tracking-[-.02em]">
+              CareerUpAI
+            </span>
+            <span className="mt-1 block text-[9px] uppercase tracking-[.22em] text-white/28">
+              AI career intelligence
+            </span>
           </div>
         </Link>
 
         <nav className="hidden items-center gap-7 lg:flex">
-          <a href="#platform" className="text-sm text-white/45 transition hover:text-white">Platform</a>
-          <a href="#career-lab" className="text-sm text-white/45 transition hover:text-white">Career Lab</a>
-          <a href="#why-careerup" className="text-sm text-white/45 transition hover:text-white">Why CareerUpAI</a>
-          <a href="#how-it-works" className="text-sm text-white/45 transition hover:text-white">How it works</a>
-          <Link to="/pricing" className="text-sm text-white/45 transition hover:text-white">Pricing</Link>
-          <Link to="/about" className="text-sm text-white/45 transition hover:text-white">About</Link>
+          <a
+            href="#platform"
+            className="text-sm text-white/45 transition hover:text-white"
+          >
+            Platform
+          </a>
+          <a
+            href="#career-lab"
+            className="text-sm text-white/45 transition hover:text-white"
+          >
+            Career Lab
+          </a>
+          <a
+            href="#why-careerup"
+            className="text-sm text-white/45 transition hover:text-white"
+          >
+            Why CareerUpAI
+          </a>
+          <a
+            href="#how-it-works"
+            className="text-sm text-white/45 transition hover:text-white"
+          >
+            How it works
+          </a>
+          <Link
+            to="/pricing"
+            className="text-sm text-white/45 transition hover:text-white"
+          >
+            Pricing
+          </Link>
+          <Link
+            to="/about"
+            className="text-sm text-white/45 transition hover:text-white"
+          >
+            About
+          </Link>
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <Link to="/login" className="rounded-xl px-4 py-2.5 text-sm text-white/55 transition hover:bg-white/[.04] hover:text-white">Login</Link>
-          <Link to="/register" className="group flex items-center gap-2 rounded-xl border border-[#d9b45a]/35 bg-[#d9b45a]/10 px-4 py-2.5 text-sm font-medium text-[#f2d88d] transition hover:border-[#d9b45a]/60 hover:bg-[#d9b45a]/15">
+          <Link
+            to="/login"
+            className="rounded-xl px-4 py-2.5 text-sm text-white/55 transition hover:bg-white/[.04] hover:text-white"
+          >
+            Login
+          </Link>
+          <Link
+            to="/register"
+            className="group flex items-center gap-2 rounded-xl border border-[#d9b45a]/35 bg-[#d9b45a]/10 px-4 py-2.5 text-sm font-medium text-[#f2d88d] transition hover:border-[#d9b45a]/60 hover:bg-[#d9b45a]/15"
+          >
             Start free <Arrow size={15} />
           </Link>
         </div>
@@ -48,23 +93,73 @@ function Header({ scrolled, menu, setMenu }) {
           aria-expanded={menu}
         >
           <span className="relative block h-4 w-5">
-            <span className={`absolute left-0 top-1 h-px w-5 bg-white transition ${menu ? "translate-y-[3px] rotate-45" : ""}`} />
-            <span className={`absolute bottom-1 left-0 h-px w-5 bg-white transition ${menu ? "-translate-y-[3px] -rotate-45" : ""}`} />
+            <span
+              className={`absolute left-0 top-1 h-px w-5 bg-white transition ${menu ? "translate-y-[3px] rotate-45" : ""}`}
+            />
+            <span
+              className={`absolute bottom-1 left-0 h-px w-5 bg-white transition ${menu ? "-translate-y-[3px] -rotate-45" : ""}`}
+            />
           </span>
         </button>
       </div>
 
       {menu && (
-        <div className="mx-auto mt-2 w-[min(94%,1180px)] rounded-2xl border border-white/10 bg-[#080b13]/95 p-3 shadow-2xl backdrop-blur-2xl lg:hidden">
-          <a href="#platform" onClick={() => setMenu(false)} className="block rounded-xl px-4 py-3 text-sm text-white/60 hover:bg-white/[.04] hover:text-white">Platform</a>
-          <a href="#career-lab" onClick={() => setMenu(false)} className="block rounded-xl px-4 py-3 text-sm text-white/60 hover:bg-white/[.04] hover:text-white">Career Lab</a>
-          <a href="#why-careerup" onClick={() => setMenu(false)} className="block rounded-xl px-4 py-3 text-sm text-white/60 hover:bg-white/[.04] hover:text-white">Why CareerUpAI</a>
-          <a href="#how-it-works" onClick={() => setMenu(false)} className="block rounded-xl px-4 py-3 text-sm text-white/60 hover:bg-white/[.04] hover:text-white">How it works</a>
-          <Link to="/pricing" onClick={() => setMenu(false)} className="block rounded-xl px-4 py-3 text-sm text-white/60 hover:bg-white/[.04] hover:text-white">Pricing</Link>
-          <Link to="/about" onClick={() => setMenu(false)} className="block rounded-xl px-4 py-3 text-sm text-white/60 hover:bg-white/[.04] hover:text-white">About</Link>
+        <div className="cu-mobile-panel mx-auto mt-2 w-[min(94%,1180px)] rounded-2xl border border-white/10 bg-[#080b13]/95 p-3 shadow-2xl backdrop-blur-2xl lg:hidden">
+          <a
+            href="#platform"
+            onClick={() => setMenu(false)}
+            className="block rounded-xl px-4 py-3 text-sm text-white/60 hover:bg-white/[.04] hover:text-white"
+          >
+            Platform
+          </a>
+          <a
+            href="#career-lab"
+            onClick={() => setMenu(false)}
+            className="block rounded-xl px-4 py-3 text-sm text-white/60 hover:bg-white/[.04] hover:text-white"
+          >
+            Career Lab
+          </a>
+          <a
+            href="#why-careerup"
+            onClick={() => setMenu(false)}
+            className="block rounded-xl px-4 py-3 text-sm text-white/60 hover:bg-white/[.04] hover:text-white"
+          >
+            Why CareerUpAI
+          </a>
+          <a
+            href="#how-it-works"
+            onClick={() => setMenu(false)}
+            className="block rounded-xl px-4 py-3 text-sm text-white/60 hover:bg-white/[.04] hover:text-white"
+          >
+            How it works
+          </a>
+          <Link
+            to="/pricing"
+            onClick={() => setMenu(false)}
+            className="block rounded-xl px-4 py-3 text-sm text-white/60 hover:bg-white/[.04] hover:text-white"
+          >
+            Pricing
+          </Link>
+          <Link
+            to="/about"
+            onClick={() => setMenu(false)}
+            className="block rounded-xl px-4 py-3 text-sm text-white/60 hover:bg-white/[.04] hover:text-white"
+          >
+            About
+          </Link>
           <div className="mt-2 grid grid-cols-2 gap-2 border-t border-white/[.06] pt-3">
-            <Link to="/login" className="rounded-xl border border-white/10 px-4 py-3 text-center text-sm text-white/70">Login</Link>
-            <Link to="/register" className="rounded-xl bg-[#d9b45a] px-4 py-3 text-center text-sm font-semibold text-[#11131a]">Start free</Link>
+            <Link
+              to="/login"
+              className="rounded-xl border border-white/10 px-4 py-3 text-center text-sm text-white/70"
+            >
+              Login
+            </Link>
+            <Link
+              to="/register"
+              className="rounded-xl bg-[#d9b45a] px-4 py-3 text-center text-sm font-semibold text-[#11131a]"
+            >
+              Start free
+            </Link>
           </div>
         </div>
       )}
@@ -73,7 +168,12 @@ function Header({ scrolled, menu, setMenu }) {
 }
 
 function Hero({ pointer }) {
-  const benefits = ["Resume analysis", "Career matching", "Skill-gap clarity", "Personal roadmaps"];
+  const benefits = [
+    "Resume analysis",
+    "Career matching",
+    "Skill-gap clarity",
+    "Personal roadmaps",
+  ];
 
   return (
     <section className="hero-section relative min-h-[760px] overflow-hidden pt-20 sm:pt-24 lg:min-h-[100svh]">
@@ -82,7 +182,7 @@ function Hero({ pointer }) {
       <div className="pointer-events-none absolute right-[8%] top-[25%] h-80 w-80 rounded-full bg-[#d9b45a]/10 blur-[120px]" />
 
       <div className="hero-layout mx-auto grid min-h-[660px] w-[min(92%,1180px)] items-center gap-8 lg:min-h-[calc(100svh-7rem)] lg:grid-cols-[1.03fr_.97fr] lg:gap-4">
-        <div className="relative z-20 max-w-3xl pb-8 pt-8 lg:pb-10 lg:pt-10">
+        <div className="cu-hero-copy relative z-20 max-w-3xl pb-8 pt-8 lg:pb-10 lg:pt-10">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.035] px-3 py-1.5 text-[11px] uppercase tracking-[.17em] text-white/45 backdrop-blur-xl">
             <span className="pulse-dot h-1.5 w-1.5 rounded-full bg-[#76d7c4]" />
             One intelligent workspace for your career
@@ -90,19 +190,31 @@ function Hero({ pointer }) {
 
           <h1 className="hero-title max-w-[720px] text-[clamp(3rem,5.4vw,5.15rem)] font-semibold leading-[.9] tracking-[-.068em]">
             Stop guessing.
-            <span className="gold-gradient mt-2 block">Know your next move.</span>
+            <span className="gold-gradient mt-2 block">
+              Know your next move.
+            </span>
           </h1>
 
           <p className="mt-6 max-w-xl text-[15px] leading-7 text-white/48 sm:text-[17px] sm:leading-8">
-            CareerUpAI connects your resume, skills and goals into one evolving career profile—then turns that context into clearer role matches, skill priorities and focused roadmaps.
+            CareerUpAI connects your resume, skills and goals into one evolving
+            career profile—then turns that context into clearer role matches,
+            skill priorities and focused roadmaps.
           </p>
 
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <Link to="/register" className="button-sheen group inline-flex items-center justify-center gap-2 rounded-2xl bg-[#f0d481] px-5 py-3.5 text-sm font-semibold text-[#11131a] shadow-[0_16px_50px_rgba(217,180,90,.16)] transition hover:-translate-y-0.5 hover:bg-[#f5dc92]">
+            <Link
+              to="/register"
+              className="button-sheen group inline-flex items-center justify-center gap-2 rounded-2xl bg-[#f0d481] px-5 py-3.5 text-sm font-semibold text-[#11131a] shadow-[0_16px_50px_rgba(217,180,90,.16)] transition hover:-translate-y-0.5 hover:bg-[#f5dc92]"
+            >
               Build my career profile
-              <span className="transition-transform group-hover:translate-x-1"><Arrow size={17} /></span>
+              <span className="transition-transform group-hover:translate-x-1">
+                <Arrow size={17} />
+              </span>
             </Link>
-            <a href="#career-lab" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[.035] px-5 py-3.5 text-sm font-medium text-white/70 backdrop-blur-xl transition hover:border-white/20 hover:bg-white/[.06] hover:text-white">
+            <a
+              href="#career-lab"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[.035] px-5 py-3.5 text-sm font-medium text-white/70 backdrop-blur-xl transition hover:border-white/20 hover:bg-white/[.06] hover:text-white"
+            >
               <Spark size={16} /> Try the Career Lab
             </a>
           </div>
@@ -110,7 +222,9 @@ function Hero({ pointer }) {
           <div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-[11px] text-white/34">
             {benefits.map((item) => (
               <span key={item} className="flex items-center gap-2">
-                <span className="flex h-4 w-4 items-center justify-center rounded-full border border-[#76d7c4]/25 text-[#76d7c4]"><CheckIcon /></span>
+                <span className="flex h-4 w-4 items-center justify-center rounded-full border border-[#76d7c4]/25 text-[#76d7c4]">
+                  <CheckIcon />
+                </span>
                 {item}
               </span>
             ))}
@@ -139,7 +253,10 @@ export default function Home3D() {
   useEffect(() => {
     const onScroll = () => {
       setScrolled(window.scrollY > 18);
-      const max = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
+      const max = Math.max(
+        document.documentElement.scrollHeight - window.innerHeight,
+        1,
+      );
       setScrollProgress(Math.min(window.scrollY / max, 1));
     };
 
@@ -149,7 +266,11 @@ export default function Home3D() {
   }, []);
 
   const handlePointerMove = (event) => {
-    if (window.matchMedia("(pointer: coarse)").matches) return;
+    if (
+      window.matchMedia("(pointer: coarse), (prefers-reduced-motion: reduce)")
+        .matches
+    )
+      return;
     setPointer({
       x: event.clientX / window.innerWidth - 0.5,
       y: event.clientY / window.innerHeight - 0.5,
@@ -157,7 +278,10 @@ export default function Home3D() {
   };
 
   return (
-    <div onMouseMove={handlePointerMove} className="careerup-landing min-h-screen overflow-hidden bg-[#060811] text-white selection:bg-[#d9b45a]/30 selection:text-white">
+    <div
+      onMouseMove={handlePointerMove}
+      className="careerup-landing min-h-screen overflow-hidden bg-[#060811] text-white selection:bg-[#d9b45a]/30 selection:text-white"
+    >
       <div
         className="fixed left-0 top-0 z-[90] h-[2px] bg-gradient-to-r from-[#7867ff] via-[#d9b45a] to-[#76d7c4] shadow-[0_0_18px_rgba(217,180,90,.35)] transition-[width] duration-150"
         style={{ width: `${scrollProgress * 100}%` }}
@@ -166,21 +290,35 @@ export default function Home3D() {
 
       <Header scrolled={scrolled} menu={menu} setMenu={setMenu} />
 
-      <main className="career-public-main relative z-10">
+      <MotionRegion as="main" className="career-public-main relative z-10">
         <Hero pointer={pointer} />
         <CompactLanding />
-      </main>
+      </MotionRegion>
 
       <footer className="relative z-10 border-t border-white/[.055] px-4 py-8 sm:px-6">
         <div className="mx-auto flex max-w-[1180px] flex-col gap-5 text-xs text-white/24 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#d9b45a]/20 bg-[#d9b45a]/[.05] text-[#efd080]">C</span>
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#d9b45a]/20 bg-[#d9b45a]/[.05] text-[#efd080]">
+              C
+            </span>
             <span>CareerUpAI · Career intelligence for what comes next.</span>
           </div>
           <div className="flex gap-5">
-            <Link to="/about" className="transition hover:text-white/60">About</Link>
-            <Link to="/pricing" className="transition hover:text-white/60">Pricing</Link>
-            <Link to="/login" className="transition hover:text-white/60">Login</Link>
+            <Link to="/about" className="transition hover:text-white/60">
+              About
+            </Link>
+            <Link to="/pricing" className="transition hover:text-white/60">
+              Pricing
+            </Link>
+            <Link to="/privacy" className="transition hover:text-white/60">
+              Privacy
+            </Link>
+            <Link to="/terms" className="transition hover:text-white/60">
+              Use notes
+            </Link>
+            <Link to="/login" className="transition hover:text-white/60">
+              Login
+            </Link>
           </div>
         </div>
       </footer>

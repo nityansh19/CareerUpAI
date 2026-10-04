@@ -1,15 +1,22 @@
 const mongoose = require("mongoose");
-
-const connectDB = async () => {
+module.exports = async function connectDB() {
+  const uri =
+    process.env.MONGODB_URI ||
+    (process.env.NODE_ENV === "production"
+      ? null
+      : "mongodb://127.0.0.1:27017/careerupai");
+  if (!uri) {
+    console.error("MONGODB_URI is required for online workspaces.");
+    return false;
+  }
   try {
-    const mongoUri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/careerforge";
-    await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 5000 });
-    console.log("MongoDB connected successfully!");
+    await mongoose.connect(uri, { serverSelectionTimeoutMS: 5000 });
+    console.log("CareerUpAI database connected.");
     return true;
-  } catch (error) {
-    console.error("MongoDB connection failed:", error.message);
+  } catch {
+    console.error(
+      "CareerUpAI database unavailable. Check MONGODB_URI and database network access.",
+    );
     return false;
   }
 };
-
-module.exports = connectDB;

@@ -1,50 +1,278 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { getProfileCompletion, getStoredUser } from "../auth/session";
-import { AskCareerUp, DemoBanner, Icon, PageHeader } from "./WorkspaceShell";
-
-const hour = new Date().getHours();
-const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-
+import { getJobs, localDate } from "../lib/workspace";
+import { learningPlan } from "../../../shared/careerEngine.mjs";
+import { DemoBanner, Icon, PageHeader } from "./WorkspaceShell";
 export default function HomeDashboard() {
-  const user = getStoredUser() || {};
-  const [detail, setDetail] = useState(null);
-  const profile = getProfileCompletion(user);
-  const resume = user.resumeAnalysis;
-  const career = user.careerIntelligence;
-  const skills = Array.isArray(user.skills) ? user.skills : [];
-  const hasResume = Boolean(user.cvFile || user.cvOriginalName);
-  const ready = [profile === 100, Boolean(resume?.analyzedAt), Boolean(career?.generatedAt)].filter(Boolean).length;
-  const firstName = (user.name || "there").trim().split(" ")[0];
-  const next = !hasResume ? { title: "Connect your resume", text: "Add a PDF to understand your strengths and the improvements that matter.", to: "/resume-intelligence", cta: "Open Resume" }
-    : !resume?.analyzedAt ? { title: "Analyze your resume", text: "Turn your existing resume into clear suggestions for your target role.", to: "/resume-intelligence", cta: "Analyze Resume" }
-      : !career?.generatedAt ? { title: "Explore your career matches", text: "See which roles fit your skills and where to focus next.", to: "/career-intelligence", cta: "Explore Matches" }
-        : career.matches?.[0]?.missingSkills?.length ? { title: `Work on ${career.matches[0].missingSkills[0]}`, text: `A priority skill gap for ${career.primaryRole || user.careerGoal}. Start with one clear next step.`, to: "/skills", cta: "View Skills" }
-          : { title: "Keep your profile up to date", text: "Your current signals are connected. Add new projects and skills as you grow.", to: "/profile", cta: "Update Profile" };
-
+  const user = getStoredUser(),
+    jobs = getJobs(user),
+    completion = getProfileCompletion(user),
+    resume = user.resumeAnalysis,
+    career = user.careerIntelligence;
+  const plan = learningPlan(
+      user,
+      user.workspace?.learningRole || user.careerGoal,
+    ),
+    milestones = user.workspace?.milestones || {},
+    done = plan.filter((s) => milestones[s.id]).length,
+    nextMilestone = plan.find((s) => !milestones[s.id]);
+  const hour = new Date().getHours(),
+    greeting =
+      hour < 12
+        ? "Good morning"
+        : hour < 17
+          ? "Good afternoon"
+          : "Good evening",
+    firstName = user.name.trim().split(" ")[0];
+  const next =
+    completion < 100
+      ? {
+          title: "Give your plan a real starting point.",
+          text: "Add your background, skills, and target role to personalize your workspace.",
+          to: "/onboarding",
+          cta: "Complete my profile",
+        }
+      : !resume || resume.demoPreview
+        ? {
+            title: "Make your resume work harder.",
+            text: "Review the actual text and see which skills, achievements, and sections need clearer evidence.",
+            to: "/resume-intelligence",
+            cta: "Review my resume",
+          }
+        : nextMilestone
+          ? {
+              title: nextMilestone.title,
+              text: nextMilestone.description,
+              to: "/skills",
+              cta: "Continue my learning plan",
+            }
+          : {
+              title: "Put your preparation into action.",
+              text: "Save suitable opportunities, prepare your examples, and follow up with a clear plan.",
+              to: "/jobs",
+              cta: "Track my opportunities",
+            };
   const metrics = [
-    { label: "Profile", value: `${profile}%`, note: "Your starting point", to: "/profile", details: "Your name, education, skills, interests, and career goal help CareerUp personalize its guidance." },
-    { label: "Resume strength", value: resume ? `${resume.overallScore}/100` : "—", note: resume ? "Latest analysis" : "Ready when you are", to: "/resume-intelligence", details: resume?.recommendations?.slice(0, 3).join(" · ") || "Analyze a PDF resume to see your strengths and improvements." },
-    { label: "Career match", value: career ? `${career.primaryReadiness}%` : "—", note: career?.primaryRole || "Find your direction", to: "/career-intelligence", details: career?.matches?.[0]?.whyFit?.slice(0, 2).join(" · ") || "Generate matches based on your profile and resume evidence." },
-    { label: "Skills", value: String(skills.length), note: career?.matches?.[0]?.missingSkills?.length ? `${career.matches[0].missingSkills.length} priority gaps` : "In your profile", to: "/skills", details: skills.length ? skills.slice(0, 8).join(" · ") : "Add your skills to your profile to get more useful recommendations." },
+    {
+      title: "Profile complete",
+      value: `${completion}%`,
+      note:
+        completion === 100
+          ? "Your foundation is ready"
+          : "Add your real context",
+      icon: "user",
+      to: "/profile",
+    },
+    {
+      title: "Resume checklist",
+      value: resume ? `${resume.overallScore}/100` : "—",
+      note: resume?.demoPreview
+        ? "Sample report"
+        : resume
+          ? "Your latest text review"
+          : "Read your actual resume",
+      icon: "file",
+      to: "/resume-intelligence",
+    },
+    {
+      title: "Learning milestones",
+      value: `${done}/${plan.length}`,
+      note: "Your progress, one step at a time",
+      icon: "layers",
+      to: "/skills",
+    },
+    {
+      title: "Applications in progress",
+      value: jobs.filter((j) => ["Applied", "Interview"].includes(j.stage))
+        .length,
+      note: `${jobs.length} opportunities tracked`,
+      icon: "briefcase",
+      to: "/jobs",
+    },
   ];
-  const actions = [
-    ...(career ? [{ icon: "briefcase", title: "Track job opportunities", description: "Save roles and stay on top of applications.", to: "/jobs" }] : []),
-    { icon: "file", title: resume ? "Improve your resume" : "Add your resume", description: "See your next resume improvements.", to: "/resume-intelligence" },
-    { icon: "spark", title: career ? "Review career fit" : "Explore career paths", description: "Understand roles and skill gaps.", to: "/career-intelligence" },
-    { icon: "mic", title: "Practice an interview", description: "Prepare for your next conversation.", to: "/interview" },
-  ].filter((item) => item.to !== next.to).slice(0, 3);
-
-  return <>
-    {user.isLocalDemo && <DemoBanner/>}
-    <PageHeader eyebrow="YOUR WORKSPACE" title={`${greeting}, ${firstName}.`} description="Here’s what can move your career forward today."/>
-    <section className="ws-hero" aria-label="Next step and progress">
-      <div className="ws-card ws-focus"><p className="ws-section-kicker">RECOMMENDED NEXT STEP</p><p className="ws-focus-label">Continue your career journey</p><h2>{next.title}</h2><p className="ws-focus-copy">{next.text}</p><Link className="ws-btn ws-btn-primary" to={next.to}>{next.cta}<Icon name="arrow" size={15}/></Link></div>
-      <div className="ws-card ws-progress"><div><p className="ws-section-kicker">YOUR FOUNDATION</p><div style={{marginTop:20}}><strong>{ready}/3</strong><p>Profile, resume, and career insights connected</p></div></div><div><div className="ws-progress-track"><span style={{width:`${ready/3*100}%`}}/></div><div className="ws-progress-steps"><span className={profile === 100 ? "done" : ""}>Profile</span><span className={resume?.analyzedAt ? "done" : ""}>Resume</span><span className={career?.generatedAt ? "done" : ""}>Career</span></div></div></div>
-    </section>
-    <AskCareerUp/>
-    <section className="ws-metrics" aria-label="Career overview">{metrics.map((metric) => <button className="ws-card ws-metric" key={metric.label} onClick={() => setDetail(metric)}><div className="ws-metric-label">{metric.label}</div><div className="ws-metric-value">{metric.value}</div><div className="ws-metric-note">{metric.note}</div></button>)}</section>
-    <section><div className="ws-section-head"><h2>Recommended for you</h2><p>Choose one thing to focus on</p></div><div className="ws-actions">{actions.map((action) => <Link to={action.to} className="ws-card ws-action-card" key={action.title}><span className="ws-action-icon"><Icon name={action.icon} size={16}/></span><h3>{action.title}</h3><p>{action.description}</p><Icon name="arrow" size={15}/></Link>)}</div></section>
-    {detail && <div className="ws-drawer-backdrop" onClick={() => setDetail(null)}><aside className="ws-drawer" role="dialog" aria-modal="true" aria-label={`${detail.label} details`} onClick={(event) => event.stopPropagation()}><div className="ws-drawer-top"><div><p className="ws-eyebrow">YOUR OVERVIEW</p><h2>{detail.label}</h2></div><button className="ws-icon-button" onClick={() => setDetail(null)} aria-label="Close details"><Icon name="close"/></button></div><div className="ws-score">{detail.value}</div><p>{detail.details}</p><Link className="ws-btn ws-btn-primary" to={detail.to}>Open {detail.label}<Icon name="arrow" size={15}/></Link></aside></div>}
-  </>;
+  const today = localDate();
+  const due = jobs.filter(
+    (j) =>
+      j.followUpAt &&
+      j.followUpAt <= today &&
+      !["Closed", "Offer"].includes(j.stage),
+  );
+  const priorities = [
+    {
+      title: nextMilestone?.title || "Review your career direction",
+      text: nextMilestone
+        ? "Continue your current learning milestone."
+        : "Compare role checklists against your skills.",
+      to: nextMilestone ? "/skills" : "/career-intelligence",
+      icon: "layers",
+    },
+    {
+      title: due.length
+        ? `${due.length} follow-up${due.length > 1 ? "s" : ""} due`
+        : "Keep your search organized",
+      text: due.length
+        ? due
+            .map((j) => j.company)
+            .slice(0, 2)
+            .join(" · ")
+        : "Save an opportunity and plan your next action.",
+      to: "/jobs",
+      icon: "briefcase",
+    },
+    {
+      title: "Rehearse one useful story",
+      text: "Practice the context, action, and outcome behind your work.",
+      to: "/interview",
+      icon: "mic",
+    },
+  ];
+  return (
+    <>
+      {user.authMode === "demo" && <DemoBanner />}
+      <PageHeader
+        eyebrow={new Date().toLocaleDateString(undefined, {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+        })}
+        title={`${greeting}, ${firstName}.`}
+        description="A clear direction. A little progress. Your next opportunity."
+      />
+      <section className="ws-command-center">
+        <div className="ws-command-copy">
+          <p className="ws-section-kicker">YOUR NEXT MOVE</p>
+          <h2>{next.title}</h2>
+          <p>{next.text}</p>
+          <Link to={next.to} className="ws-btn ws-btn-primary">
+            {next.cta}
+            <Icon name="arrow" size={16} />
+          </Link>
+        </div>
+        <div className="ws-direction-card">
+          <span className="ws-orbit-icon">
+            <Icon name="spark" size={30} />
+          </span>
+          <p className="ws-section-kicker">BUILDING TOWARD</p>
+          <h3>{user.careerGoal || "Your next chapter"}</h3>
+          <div className="ws-direction-divider" />
+          <p>
+            {user.skills?.length || 0} declared skills · {done} milestones done
+          </p>
+          <Link to="/career-intelligence">
+            Explore your paths <Icon name="arrow" size={14} />
+          </Link>
+        </div>
+      </section>
+      <section className="ws-metrics" aria-label="Your career overview">
+        {metrics.map((metric) => (
+          <Link className="ws-card ws-metric" to={metric.to} key={metric.title}>
+            <div className="ws-metric-label">
+              <span>{metric.title}</span>
+              <Icon name={metric.icon} size={17} />
+            </div>
+            <div className="ws-metric-value">{metric.value}</div>
+            <div className="ws-metric-note">{metric.note}</div>
+          </Link>
+        ))}
+      </section>
+      <section>
+        <div className="ws-section-head">
+          <h2>Small moves. Real progress.</h2>
+          <p>Choose your focus for today</p>
+        </div>
+        <div className="ws-actions">
+          {priorities.map((item, i) => (
+            <Link
+              key={item.title}
+              className="ws-card ws-action-card"
+              to={item.to}
+            >
+              <div className="ws-action-heading">
+                <span className="ws-action-icon">
+                  <Icon name={item.icon} />
+                </span>
+                <small>0{i + 1}</small>
+              </div>
+              <h3>{item.title}</h3>
+              <p>{item.text}</p>
+              <span className="ws-action-link">
+                Open <Icon name="arrow" size={15} />
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
+      <section className="ws-grid-two" style={{ marginTop: 26 }}>
+        <div className="ws-card ws-panel">
+          <div className="ws-panel-header">
+            <div>
+              <p className="ws-section-kicker">YOUR DIRECTION</p>
+              <h2 style={{ marginTop: 12 }}>Paths you can build toward</h2>
+            </div>
+            <Link
+              to="/career-intelligence"
+              className="ws-icon-button"
+              aria-label="View career paths"
+            >
+              <Icon name="arrow" />
+            </Link>
+          </div>
+          {career?.matches?.length ? (
+            career.matches.slice(0, 3).map((match) => (
+              <div className="ws-coverage-row" key={match.role}>
+                <div>
+                  <strong>{match.role}</strong>
+                  <span>{match.matchedSkills.length} skills covered</span>
+                </div>
+                <b>{match.readinessScore}%</b>
+                <i>
+                  <span style={{ width: `${match.readinessScore}%` }} />
+                </i>
+              </div>
+            ))
+          ) : (
+            <p className="ws-muted" style={{ marginTop: 25 }}>
+              Complete your profile to compare career checklists.
+            </p>
+          )}
+          <p className="ws-muted" style={{ marginTop: 18, fontSize: 11 }}>
+            Skill coverage against curated checklists, not a hiring prediction.
+          </p>
+        </div>
+        <div className="ws-card ws-panel">
+          <p className="ws-section-kicker">YOUR LEARNING PLAN</p>
+          <h2 style={{ marginTop: 12 }}>
+            {plan.length ? "Keep the momentum." : "Start with a direction."}
+          </h2>
+          <p>
+            {plan.length
+              ? `${done} of ${plan.length} milestones completed`
+              : "Choose a target role to build your first learning plan."}
+          </p>
+          <div className="ws-progress-track" style={{ margin: "25px 0" }}>
+            <span
+              style={{
+                width: `${plan.length ? (done / plan.length) * 100 : 0}%`,
+              }}
+            />
+          </div>
+          {plan.slice(0, 3).map((item) => (
+            <div className="ws-plan-preview" key={item.id}>
+              <span className={milestones[item.id] ? "done" : ""}>
+                <Icon
+                  name={milestones[item.id] ? "check" : "layers"}
+                  size={14}
+                />
+              </span>
+              <strong>{item.title}</strong>
+              <small>{item.phase}</small>
+            </div>
+          ))}
+          <Link to="/skills" className="ws-btn" style={{ marginTop: 20 }}>
+            Open full plan <Icon name="arrow" size={14} />
+          </Link>
+        </div>
+      </section>
+    </>
+  );
 }
