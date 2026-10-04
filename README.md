@@ -1,112 +1,64 @@
 # CareerUpAI
 
-CareerUpAI is an AI-focused career platform designed to bring career planning, resume intelligence, guided workflows, and a modern user experience into one product.
+A connected career workspace for students and early-career builders: review your resume, compare paths, build evidence, and organize your next opportunity.
 
-## Live deployment
+**[Open CareerUpAI →](https://career-up-ai-delta.vercel.app/)**
 
-[**Open CareerUpAI Live →**](https://career-up-ai-delta.vercel.app/)
+## Current product
 
-The frontend is deployed on Vercel. The project is actively being connected to the hosted CareerUp AI backend.
+- **Real resume text review:** read a PDF on-device or paste text; inspect contact details, sections, skill mentions, and outcomes. Download the original PDF or a plain-text review.
+- **12 career paths:** compare software, frontend, backend, Python, AI applications, ML, data analysis, data science, DevOps, mobile, and product design skill checklists. Set a target role.
+- **Learning plans:** practical milestones, official learning resources where available, projects, and persistent progress.
+- **Applications:** save and edit opportunities, stages, dates, notes, and follow-ups; search, filter, and export CSV.
+- **Interview practice:** role-specific prompts, three difficulty levels, structured answer checks, and saved session history.
+- **Data controls:** export a credential-free workspace backup and merge an import. Original PDFs are downloaded separately.
+- **Product experience:** guided onboarding, an explicit sample workspace, responsive layouts, keyboard navigation, loading and recovery states, reduced-motion support, and page-level code splitting.
 
-## Project status
+Reviews use transparent rules, not a generative AI service. Resume scores are not ATS pass rates; career percentages describe skill-checklist coverage, not hiring probability. The app does not fetch live job listings or submit applications. Current core tools are free; premium checkout is not active.
 
-**Active development.** The repository currently contains a React/Vite frontend and a Node.js backend foundation.
+## Data modes
 
-## What is in the project
+**Device mode is the default.** Profiles, accounts, learning progress, applications, and interview history stay in this browser. PDF files use IndexedDB. Device passwords restrict the interface but do not encrypt browser data or secure a shared browser profile. Export backups before clearing site storage.
 
-### Career experience
+**Online accounts are implemented behind `VITE_CLOUD_ACCOUNTS=true`.** The Express API supports hashed passwords, revocable sessions, authenticated account ownership, MongoDB-backed workspaces, stored PDFs, and conflict detection. Enable the flag only after the hosted API reports `/health` version `2` and a connected database, and the online flow is verified. Device and online accounts are separate; use Settings exports to transfer workspace data.
 
-- Career intelligence workspace
-- Resume intelligence tools
-- Dashboard-based user experience
-- Public product pages
-- Authentication and local demo flows
-- Guided career workflows
+## Stack
 
-### Interface
+React 19 · Vite · React Router · Tailwind CSS · locally hosted Manrope · PDF.js · Node.js · Express · Mongoose/MongoDB · Node crypto · Node test runner
 
-- Responsive React application
-- Modern landing experience
-- 3D/WebGL-oriented visual experiments
-- Separate public and workspace experiences
-- Reusable dashboard sections
+## Development
 
-## Tech stack
+```bash
+npm ci --prefix frontend
+npm ci --prefix backend
+npm run dev --prefix frontend
+```
 
-### Frontend
+For the API, set `MONGODB_URI` in the hosting environment or shell, then run:
 
-- React 19
-- Vite
-- React Router
-- Tailwind CSS
-- JavaScript / JSX
+```bash
+npm start --prefix backend
+```
 
-### Backend foundation
+The API does not automatically load `.env` files. For local Node 24 development with a copied `backend/.env`, use `node --env-file=.env server.js` from the backend directory. Never commit actual credentials.
 
-- Node.js
-- Express
-- MongoDB / Mongoose
-- CORS
+```bash
+npm test --prefix frontend
+npm test --prefix backend
+npm run lint --prefix frontend
+npm run build --prefix frontend
+```
 
-## Repository structure
+## Structure
 
 ```text
-CareerUpAI/
-├── frontend/        React/Vite client application
-├── backend/         Backend application code
-├── package.json     Backend/root package configuration
-├── netlify.toml     Deployment configuration
-└── README.md        Project overview
+frontend/src/auth/       Accounts, sessions, onboarding
+frontend/src/workspace/  Individual product pages and navigation
+frontend/src/lib/        Persistence, backups, PDF extraction
+shared/                 One career and resume rules engine
+backend/                Protected API, models, validation
+frontend/tests/          Device-account and analysis regression tests
+backend/tests/           Security and API contract tests with fixture PDF
 ```
 
-The frontend contains the public pages, dashboards, career intelligence, resume intelligence, demo workspace, and visual experience components.
-
-## Run locally
-
-### Browser data storage
-
-The active workspace saves accounts, profiles, job applications, interview notes and
-progress, and preview reports in this browser. Uploaded PDFs (up to 5 MB) are stored
-in IndexedDB and can be downloaded from the Resume page after reopening the app.
-These workspace flows do not require a backend or send their data to a server.
-
-Data belongs to this browser and site address; it does not sync between devices.
-Signing out keeps saved data. Clearing site data removes it, and private browsing
-may discard it when the session ends. Resume preview reports use profile data,
-not the contents of the saved PDF. The separate legacy backend remains optional.
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-To create a production frontend build:
-
-```bash
-npm run build
-```
-
-### Backend
-
-Install the backend dependencies from the repository root or the backend workspace used by the current implementation, then run the configured development/start script.
-
-```bash
-npm install
-npm run dev
-```
-
-## Development direction
-
-The project is being developed toward a complete career platform rather than a collection of disconnected tools. New features should fit into one of four clear areas:
-
-1. **Discover** — understand career paths and opportunities.
-2. **Prepare** — improve resumes, skills, and professional readiness.
-3. **Act** — turn recommendations into concrete next steps.
-4. **Track** — keep progress and career activity in one workspace.
-
-## Documentation rule
-
-Keep user-facing product information in this README concise. Put implementation details beside the relevant frontend or backend code so the repository remains easy to scan.
+[Environment setup](docs/ENVIRONMENT.md) · [Testing](docs/TESTING.md) · [Security](docs/SECURITY.md) · [Release checks](docs/RELEASE_CHECKLIST.md)

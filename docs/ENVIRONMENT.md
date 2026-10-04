@@ -1,27 +1,26 @@
-# Environment Configuration
+# Environment setup
 
-Keep environment-specific values outside source code and never commit real credentials.
+## Frontend (Vercel root: `frontend`)
 
-## Local setup
+| Variable | Purpose |
+| --- | --- |
+| `VITE_API_URL` | HTTPS base URL of the authenticated CareerUpAI API, without a trailing slash. |
+| `VITE_CLOUD_ACCOUNTS` | `false` or absent: device accounts. `true`: online accounts. Enable only after API version 2 and database connectivity are verified. |
 
-Use checked-in example files when available and create local environment files for machine-specific values.
+Client variables are public build-time configuration. Never put database credentials in `VITE_` variables. Keep source outside the frontend root available to the build because `shared/careerEngine.mjs` is used by both runtimes. `frontend/vercel.json` provides SPA routing and security headers.
 
-Typical configuration categories include:
+## API (Render or another Node 24 host)
 
-- API base URLs
-- Database connection strings
-- Authentication secrets
-- Third-party service keys
-- Feature flags
+| Variable | Purpose |
+| --- | --- |
+| `MONGODB_URI` | Required in production; MongoDB connection string. MongoDB must allow the host's network access. |
+| `PORT` | Host-supplied listening port; defaults to `5000`. |
+| `NODE_ENV` | `production` on the hosted API. |
+| `ALLOWED_ORIGINS` | Comma-separated frontend origins, including any preview URL used for online testing. |
+| `TRUST_PROXY` | Number of trusted reverse proxies. Defaults to `1` on Render and `0` elsewhere; configure to match the actual host. |
 
-## Rules
+Install with `npm ci --prefix backend`, start with `npm start --prefix backend`. The root package also delegates startup to the backend. Environment files are examples; the API does not automatically load them. Node 24 supports `--env-file=.env` for local testing.
 
-1. Do not commit secrets, tokens or private keys.
-2. Document every required variable and its purpose.
-3. Fail clearly when a required variable is missing.
-4. Keep development and production values separate.
-5. Rotate any credential that is accidentally exposed.
+`GET /health` must report HTTP 200, `version: 2`, `database: connected`, and the accounts/workspace capabilities before activating online accounts. A degraded API keeps the frontend in device mode when the flag is disabled. Online errors never silently create a local account.
 
-## Review checklist
-
-Before deployment, confirm that production variables exist in the hosting platform and that no local-only values are hardcoded into the client bundle.
+Existing device accounts are not uploaded automatically. To move progress, export a backup, create an online account after activation, and import the backup. Re-upload the original PDF separately.

@@ -1,0 +1,294 @@
+/* One-time entrances and useful feedback. Content stays visible without JS. */
+.cu-reveal[data-motion-state] {
+  transition:
+    opacity 520ms ease,
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 220ms ease,
+    background-color 220ms ease,
+    box-shadow 220ms ease;
+}
+.cu-reveal[data-motion-state="pending"] {
+  opacity: 0;
+  transform: translateY(18px);
+}
+.cu-reveal[data-motion-state="visible"] {
+  transition-delay:
+    var(--cu-reveal-delay, 0ms), var(--cu-reveal-delay, 0ms), 0ms, 0ms, 0ms;
+}
+.cu-reveal:focus-within {
+  opacity: 1;
+  transform: none;
+  transition-delay: 0ms;
+}
+.cu-hero-copy > * {
+  animation: cu-rise 650ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.cu-hero-copy > :nth-child(2) {
+  animation-delay: 70ms;
+}
+.cu-hero-copy > :nth-child(3) {
+  animation-delay: 140ms;
+}
+.cu-hero-copy > :nth-child(4) {
+  animation-delay: 210ms;
+}
+.cu-hero-copy > :nth-child(5) {
+  animation-delay: 280ms;
+}
+.cu-hero-copy .gold-gradient {
+  background-size: 180% 100%;
+  animation: cu-title-light 8s ease-in-out 2;
+}
+.cu-mobile-panel,
+.auth-frame {
+  animation: cu-rise 450ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.auth-mini-card {
+  animation: cu-rise 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.auth-mini-card:nth-child(2) {
+  animation-delay: 90ms;
+}
+.auth-mini-card:nth-child(3) {
+  animation-delay: 180ms;
+}
+.ws-page-motion {
+  min-width: 0;
+}
+.ws-location strong {
+  animation: cu-fade 280ms ease;
+}
+.ws-nav-link {
+  position: relative;
+}
+.ws-nav-link.active::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 24%;
+  bottom: 24%;
+  width: 3px;
+  border-radius: 3px;
+  background: #f0d481;
+  transform-origin: center;
+  animation: cu-nav-marker 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.ws-btn-primary {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.ws-btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: -50% -60%;
+  background: linear-gradient(
+    105deg,
+    transparent 42%,
+    #ffffff50 50%,
+    transparent 58%
+  );
+  transform: translateX(-65%);
+  pointer-events: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .ws-btn-primary:hover::after {
+    animation: cu-sheen 650ms ease both;
+  }
+  .ws-action-icon,
+  .ws-milestone-number,
+  .ws-nav-link > svg {
+    transition:
+      transform 250ms cubic-bezier(0.22, 1, 0.36, 1),
+      background 250ms ease;
+  }
+  .ws-action-card:hover .ws-action-icon {
+    transform: translateY(-3px) rotate(-5deg);
+  }
+  .ws-nav-link:hover > svg {
+    transform: translateY(-1px);
+  }
+  .ws-orbit-icon {
+    animation: cu-float 5s ease-in-out 3;
+  }
+}
+.ws-btn:not(:disabled):active,
+.auth-submit:not(:disabled):active {
+  transform: translateY(1px) scale(0.98);
+}
+.ws-progress-track > span,
+.ws-score-bars i > span,
+.ws-coverage-row i > span {
+  transform-origin: left;
+  animation: cu-fill 650ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: width 450ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cu-reveal[data-motion-state="pending"]
+  :is(.ws-progress-track, .ws-score-bars i, .ws-coverage-row i)
+  > span {
+  animation-play-state: paused;
+}
+.ws-interview-progress span {
+  transition:
+    background 300ms ease,
+    box-shadow 300ms ease;
+}
+.ws-interview-progress span.active {
+  box-shadow: 0 0 14px #d9b45a25;
+}
+.ws-question-enter {
+  animation: cu-rise 350ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.ws-milestone {
+  transition:
+    border-color 250ms ease,
+    background 250ms ease;
+}
+.ws-milestone.complete .ws-milestone-number {
+  color: #8be5d3;
+  background: #76d7c410;
+  border-color: #76d7c44d;
+  animation: cu-complete 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ws-milestone-check input:checked + span {
+  color: #8be5d3;
+}
+.ws-message[role="status"] {
+  animation: cu-rise 300ms ease both;
+}
+.ws-drawer-backdrop,
+.ws-palette-backdrop,
+.ws-scrim {
+  animation: cu-fade 200ms ease both;
+}
+.ws-drawer {
+  animation: cu-drawer 350ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.ws-palette {
+  animation: cu-rise 250ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.ws-palette-results button {
+  transition:
+    background 180ms ease,
+    padding-left 180ms ease;
+}
+.ws-palette-results button:hover {
+  padding-left: 20px;
+}
+
+@keyframes cu-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes cu-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes cu-title-light {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+@keyframes cu-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes cu-nav-marker {
+  from {
+    opacity: 0;
+    transform: scaleY(0.3);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+@keyframes cu-sheen {
+  to {
+    transform: translateX(65%);
+  }
+}
+@keyframes cu-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+@keyframes cu-complete {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.14) rotate(-4deg);
+  }
+}
+@keyframes cu-drawer {
+  from {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+  .cu-reveal[data-motion-state="pending"] {
+    opacity: 1;
+    transform: none;
+  }
+  .cu-hero-copy > *,
+  .auth-frame,
+  .auth-mini-card,
+  .ws-orbit-icon,
+  .cu-mobile-panel,
+  .ws-question-enter,
+  .ws-drawer,
+  .ws-palette {
+    animation: none !important;
+  }
+  .ws-progress-track > span,
+  .ws-score-bars i > span,
+  .ws-coverage-row i > span {
+    transform: none;
+  }
+  .career-chart-line {
+    stroke-dashoffset: 0;
+  }
+}

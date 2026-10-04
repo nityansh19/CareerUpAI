@@ -1,517 +1,256 @@
 const express = require("express");
 const multer = require("multer");
-const path = require("path");
-const fs = require("fs/promises");
-const pdf = require("pdf-parse");
+const { PDFParse } = require("pdf-parse");
+const { rateLimit } = require("express-rate-limit");
 const User = require("../models/User");
-const { analyzeResumeText } = require("../services/resumeAnalyzer");
+const auth = require("../middleware/auth");
 const {
-  generateCareerIntelligence,
-} = require("../services/careerIntelligence");
-
+  hashPassword,
+  verifyPassword,
+  issueSession,
+} = require("../services/auth");
+const { validateWorkspace, text } = require("../services/validation");
 const router = express.Router();
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${Math.round(
-      Math.random() * 1e9
-    )}${path.extname(file.originalname)}`;
-
-    cb(null, uniqueName);
+function passwordValue(value) {
+  if (typeof value !== "string" || !value.length || value.length > 128)
+    throw Object.assign(
+      new Error("Enter a valid password with at most 128 characters."),
+      { status: 400 },
+    );
+  return value;
+}
+const engine = import("../../shared/careerEngine.mjs");
+const authLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: {
+    message: "Too many sign-in attempts. Please try again in 15 minutes.",
   },
 });
-
+function serializeUser(user) {
+  const data = user.toObject ? user.toObject() : user;
+  return {
+    id: String(data._id),
+    name: data.name,
+    email: data.email,
+    education: data.education || "",
+    skills: data.skills || [],
+    careerInterests: data.careerInterests || [],
+    careerGoal: data.careerGoal || "",
+    cvFile: data.cvFile || "",
+    cvOriginalName: data.cvOriginalName || "",
+    resumeAnalysis: data.resumeAnalysis || null,
+    careerIntelligence: data.careerIntelligence || null,
+    workspace: data.workspace || { jobs: [], milestones: {}, interviews: [] },
+    workspaceVersion: data.workspaceVersion || 0,
+  };
+}
+const sendUser = (res, user) => res.json({ user: serializeUser(user) });
+router.post("/register", authLimit, async (req, res) => {
+  const name = text(req.body.name, 100, true),
+    email = text(req.body.email, 254, true).toLowerCase(),
+    password = passwordValue(req.body.password);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length < 8)
+    return res
+      .status(400)
+      .json({
+        message: "Enter a valid email and a password with 8–128 characters.",
+      });
+  if (await User.exists({ email }))
+    return res
+      .status(409)
+      .json({
+        message: "An account with this email already exists. Sign in instead.",
+      });
+  const user = await User.create({
+    name,
+    email,
+    password: await hashPassword(password),
+  });
+  const session = await issueSession(user._id);
+  return res.status(201).json({ ...session, user: serializeUser(user) });
+});
+router.post("/login", authLimit, async (req, res) => {
+  const email = text(req.body.email, 254, true).toLowerCase(),
+    password = passwordValue(req.body.password);
+  const user = await User.findOne({ email }).select("+password");
+  if (!user || !(await verifyPassword(password, user.password)))
+    return res
+      .status(401)
+      .json({ message: "The email or password is incorrect." });
+  // Upgrade old plaintext records only after the owner proves the password.
+  if (!user.password.startsWith("scrypt:")) {
+    user.password = await hashPassword(password);
+    await user.save();
+  }
+  const session = await issueSession(user._id);
+  res.json({ ...session, user: serializeUser(user) });
+});
+router.get("/me", auth, (req, res) => sendUser(res, req.user));
+router.post("/logout", auth, async (req, res) => {
+  await req.session.deleteOne();
+  res.json({ message: "Signed out." });
+});
+router.put("/workspace", auth, async (req, res) => {
+  const fields = validateWorkspace(req.body);
+  const { buildCareerIntelligence } = await engine;
+  const careerIntelligence = fields.skills.length
+    ? buildCareerIntelligence({ ...serializeUser(req.user), ...fields })
+    : null;
+  const user = await User.findOneAndUpdate(
+    {
+      _id: req.user._id,
+      ...(req.body.expectedVersion === 0
+        ? {
+            $or: [
+              { workspaceVersion: 0 },
+              { workspaceVersion: { $exists: false } },
+            ],
+          }
+        : { workspaceVersion: req.body.expectedVersion }),
+    },
+    { $set: { ...fields, careerIntelligence }, $inc: { workspaceVersion: 1 } },
+    { new: true, runValidators: true },
+  );
+  if (!user)
+    return res
+      .status(409)
+      .json({
+        message:
+          "Your workspace changed in another session. Reload this page before saving again.",
+      });
+  sendUser(res, user);
+});
 const upload = multer({
-  storage,
-
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype === "application/pdf") {
-      cb(null, true);
-    } else {
-      cb(new Error("Only PDF files are allowed."));
-    }
-  },
-
-  limits: {
-    fileSize: 5 * 1024 * 1024,
-  },
-});
-
-const serializeUser = (user) => ({
-  id: user._id,
-  name: user.name,
-  email: user.email,
-  education: user.education,
-  skills: user.skills,
-  careerInterests: user.careerInterests,
-  careerGoal: user.careerGoal,
-  cvFile: user.cvFile,
-  cvOriginalName: user.cvOriginalName,
-  resumeAnalysis: user.resumeAnalysis,
-  careerIntelligence: user.careerIntelligence,
-});
-
-
-/* =========================
-   TEST ROUTE
-========================= */
-
-router.get("/test", (req, res) => {
-  res.json({
-    message: "User API is working!",
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 0 },
+}).single("cv");
+router.post("/analyze-resume/:id", auth, (req, res, next) => {
+  upload(req, res, (error) => {
+    if (error)
+      return res
+        .status(400)
+        .json({
+          message:
+            error.code === "LIMIT_FILE_SIZE"
+              ? "Choose a PDF smaller than 5 MB."
+              : "Upload one PDF file and try again.",
+        });
+    (async () => {
+      const file = req.file;
+      if (
+        !file ||
+        !file.originalname.toLowerCase().endsWith(".pdf") ||
+        !file.buffer.subarray(0, 1024).includes(Buffer.from("%PDF-"))
+      )
+        return res.status(400).json({ message: "Choose a valid PDF resume." });
+      let parser;
+      try {
+        parser = new PDFParse({
+          data: new Uint8Array(file.buffer),
+          isEvalSupported: false,
+        });
+        const info = await parser.getInfo();
+        if (info.total > 10)
+          return res
+            .status(400)
+            .json({ message: "Choose a PDF with 10 pages or fewer." });
+        const parsed = await parser.getText();
+        const source = parsed.pages.map((p) => p.text).join("\n");
+        const { analyzeResumeText, buildCareerIntelligence } = await engine;
+        const report = analyzeResumeText(source, serializeUser(req.user), {
+          pages: info.total,
+          source: "pdf",
+          fileName: file.originalname,
+        });
+        const career = buildCareerIntelligence({
+          ...serializeUser(req.user),
+          resumeAnalysis: report,
+        });
+        const user = await User.findByIdAndUpdate(
+          req.user._id,
+          {
+            $set: {
+              resumeAnalysis: report,
+              careerIntelligence: career,
+              cvFile: "account-pdf",
+              cvOriginalName: file.originalname.slice(0, 250),
+              resumeData: file.buffer,
+            },
+            $inc: { workspaceVersion: 1 },
+          },
+          { new: true },
+        );
+        sendUser(res, user);
+      } catch (error) {
+        if (error.name === "MongoServerError") throw error;
+        res
+          .status(422)
+          .json({
+            message:
+              "This PDF could not be read. Export a text-based PDF without password protection, or paste its text.",
+          });
+      } finally {
+        if (parser) await parser.destroy().catch(() => {});
+      }
+    })().catch(next);
   });
 });
-
-
-/* =========================
-   REGISTER
-========================= */
-
-router.post("/register", async (req, res) => {
+router.post("/analyze-text", auth, async (req, res) => {
+  const source = text(req.body.text, 60000, true);
+  const { analyzeResumeText, buildCareerIntelligence } = await engine;
+  let report;
   try {
-    const { name, email, password } = req.body;
-
-    if (!name || !email || !password) {
-      return res.status(400).json({
-        message: "Name, email and password are required",
-      });
-    }
-
-    const existingUser = await User.findOne({ email });
-
-    if (existingUser) {
-      return res.status(400).json({
-        message: "User already exists",
-      });
-    }
-
-    const user = await User.create({
-      name,
-      email,
-      password,
-    });
-
-    res.status(201).json({
-      message: "User registered successfully!",
-
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
+    report = analyzeResumeText(source, serializeUser(req.user));
+  } catch (error) {
+    return res.status(422).json({ message: error.message });
+  }
+  const career = buildCareerIntelligence({
+    ...serializeUser(req.user),
+    resumeAnalysis: report,
+  });
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: { resumeAnalysis: report, careerIntelligence: career },
+      $inc: { workspaceVersion: 1 },
+    },
+    { new: true },
+  );
+  sendUser(res, user);
+});
+router.get("/resume", auth, async (req, res) => {
+  const user = await User.findById(req.user._id).select("+resumeData");
+  if (!user.resumeData)
+    return res
+      .status(404)
+      .json({ message: "Upload a PDF to save an original file." });
+  res.set({
+    "Content-Type": "application/pdf",
+    "Content-Disposition": `attachment; filename="resume.pdf"`,
+  });
+  res.send(user.resumeData);
+});
+router.post("/career-intelligence/:id", auth, async (req, res) => {
+  if (!req.user.skills.length)
+    return res
+      .status(422)
+      .json({ message: "Add your skills before comparing career paths." });
+  const { buildCareerIntelligence } = await engine;
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        careerIntelligence: buildCareerIntelligence(serializeUser(req.user)),
       },
-    });
-  } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      message: "Server error",
-    });
-  }
+      $inc: { workspaceVersion: 1 },
+    },
+    { new: true },
+  );
+  sendUser(res, user);
 });
-
-
-/* =========================
-   LOGIN
-========================= */
-
-router.post("/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({
-        message: "Email and password are required",
-      });
-    }
-
-    const user = await User.findOne({ email });
-
-    if (!user || user.password !== password) {
-      return res.status(401).json({
-        message: "Invalid email or password",
-      });
-    }
-
-    res.json({
-      message: "Login successful!",
-      user: serializeUser(user),
-    });
-  } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      message: "Server error",
-    });
-  }
-});
-
-
-/* =========================
-   UPDATE PROFILE
-========================= */
-
-router.put("/profile/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const {
-      fullName,
-      education,
-      skills,
-      interests,
-      careerGoal,
-    } = req.body;
-
-    if (
-      !fullName ||
-      !education ||
-      !skills ||
-      !interests ||
-      !careerGoal
-    ) {
-      return res.status(400).json({
-        message: "All profile fields are required",
-      });
-    }
-
-    const user = await User.findByIdAndUpdate(
-      id,
-      {
-        $set: {
-          name: fullName,
-          education,
-
-          skills: skills
-            .split(",")
-            .map((skill) => skill.trim())
-            .filter(Boolean),
-
-          careerInterests: interests
-            .split(",")
-            .map((interest) => interest.trim())
-            .filter(Boolean),
-
-          careerGoal,
-        },
-
-        $unset: {
-          careerIntelligence: 1,
-        },
-      },
-
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
-
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-      });
-    }
-
-    res.json({
-      message: "Profile saved successfully!",
-      user: serializeUser(user),
-    });
-  } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      message: "Server error",
-    });
-  }
-});
-
-
-/* =========================
-   UPLOAD CV
-========================= */
-
-router.post(
-  "/upload-cv/:id",
-  upload.single("cv"),
-
-  async (req, res) => {
-    try {
-      const { id } = req.params;
-
-      if (!req.file) {
-        return res.status(400).json({
-          message: "Please upload a PDF CV.",
-        });
-      }
-
-      const user = await User.findByIdAndUpdate(
-        id,
-
-        {
-          $set: {
-            cvFile: req.file.filename,
-            cvOriginalName: req.file.originalname,
-          },
-
-          $unset: {
-            resumeAnalysis: 1,
-            careerIntelligence: 1,
-          },
-        },
-
-        {
-          new: true,
-        }
-      );
-
-      if (!user) {
-        return res.status(404).json({
-          message: "User not found",
-        });
-      }
-
-      res.json({
-        message: "CV uploaded successfully!",
-
-        cv: {
-          originalName: req.file.originalname,
-          fileName: req.file.filename,
-          size: req.file.size,
-        },
-
-        user: serializeUser(user),
-      });
-    } catch (error) {
-      console.error(error);
-
-      res.status(500).json({
-        message: "CV upload failed",
-      });
-    }
-  }
-);
-
-
-/* =========================
-   RESUME ANALYZER
-========================= */
-
-router.post(
-  "/analyze-resume/:id",
-  upload.single("cv"),
-
-  async (req, res) => {
-    try {
-      const user = await User.findById(req.params.id);
-
-      if (!user) {
-        return res.status(404).json({
-          message: "User not found",
-        });
-      }
-
-      if (!req.file) {
-        return res.status(400).json({
-          message: "Please upload a PDF resume.",
-        });
-      }
-
-      const buffer = await fs.readFile(req.file.path);
-
-      const parsed = await pdf(buffer);
-
-      const text = (parsed.text || "").trim();
-
-      if (text.length < 80) {
-        return res.status(422).json({
-          message:
-            "We could not extract enough text from this PDF. Try exporting your resume as a text-based PDF instead of an image scan.",
-        });
-      }
-
-      const analysis = analyzeResumeText(text, user);
-
-      user.cvFile = req.file.filename;
-      user.cvOriginalName = req.file.originalname;
-
-      user.resumeAnalysis = analysis;
-
-      user.careerIntelligence = undefined;
-
-      await user.save();
-
-      res.json({
-        message: "Resume analysis complete.",
-
-        analysis,
-
-        cv: {
-          originalName: req.file.originalname,
-          fileName: req.file.filename,
-          size: req.file.size,
-        },
-
-        user: serializeUser(user),
-      });
-    } catch (error) {
-      console.error(
-        "Resume analysis error:",
-        error
-      );
-
-      res.status(500).json({
-        message:
-          "Resume analysis failed. Please try again.",
-      });
-    }
-  }
-);
-
-
-/* =========================
-   GET RESUME ANALYSIS
-========================= */
-
-router.get(
-  "/resume-analysis/:id",
-
-  async (req, res) => {
-    try {
-      const user = await User.findById(
-        req.params.id
-      ).select(
-        "resumeAnalysis cvOriginalName careerGoal"
-      );
-
-      if (!user) {
-        return res.status(404).json({
-          message: "User not found",
-        });
-      }
-
-      res.json({
-        analysis: user.resumeAnalysis || null,
-        cvOriginalName: user.cvOriginalName,
-        careerGoal: user.careerGoal,
-      });
-    } catch (error) {
-      console.error(error);
-
-      res.status(500).json({
-        message: "Unable to load resume analysis",
-      });
-    }
-  }
-);
-
-
-/* =========================
-   GENERATE CAREER INTELLIGENCE
-========================= */
-
-router.post(
-  "/career-intelligence/:id",
-
-  async (req, res) => {
-    try {
-      const user = await User.findById(
-        req.params.id
-      );
-
-      if (!user) {
-        return res.status(404).json({
-          message: "User not found",
-        });
-      }
-
-      if (
-        !user.careerGoal ||
-        !Array.isArray(user.skills) ||
-        user.skills.length === 0
-      ) {
-        return res.status(422).json({
-          message:
-            "Complete your Career Profile with a target role and skills before generating Career Intelligence.",
-        });
-      }
-
-      const intelligence =
-        generateCareerIntelligence(user);
-
-      user.careerIntelligence = intelligence;
-
-      await user.save();
-
-      res.json({
-        message:
-          "Career Intelligence generated.",
-
-        intelligence:
-          user.careerIntelligence,
-
-        user: serializeUser(user),
-      });
-    } catch (error) {
-      console.error(
-        "Career intelligence error:",
-        error
-      );
-
-      res.status(500).json({
-        message:
-          "Unable to generate Career Intelligence. Please try again.",
-      });
-    }
-  }
-);
-
-
-/* =========================
-   GET CAREER INTELLIGENCE
-========================= */
-
-router.get(
-  "/career-intelligence/:id",
-
-  async (req, res) => {
-    try {
-      const user = await User.findById(
-        req.params.id
-      ).select(
-        "careerIntelligence careerGoal skills careerInterests resumeAnalysis"
-      );
-
-      if (!user) {
-        return res.status(404).json({
-          message: "User not found",
-        });
-      }
-
-      res.json({
-        intelligence:
-          user.careerIntelligence || null,
-
-        context: {
-          careerGoal: user.careerGoal,
-          skills: user.skills,
-          careerInterests:
-            user.careerInterests,
-
-          hasResumeAnalysis: Boolean(
-            user.resumeAnalysis?.analyzedAt
-          ),
-        },
-      });
-    } catch (error) {
-      console.error(error);
-
-      res.status(500).json({
-        message:
-          "Unable to load Career Intelligence",
-      });
-    }
-  }
-);
-
-
+// No legacy ID-only routes: every data operation requires an authenticated owner.
 module.exports = router;
+module.exports.serializeUser = serializeUser;

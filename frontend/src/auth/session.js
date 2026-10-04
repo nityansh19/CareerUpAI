@@ -1,97 +1,61 @@
-import { isLocalDemoUser, LOCAL_USER_KEY } from "./localAccount";
-import { createDemoWorkspaceUser } from "../demoIntelligence";
-
 export const SESSION_KEY = "user";
-
-function migrateToLocal(user) {
-  if (!user?.id || !user?.email) return null;
-  if (isLocalDemoUser(user)) return user;
-
-  const localId = `local-${user.id}`;
-  const defaults = createDemoWorkspaceUser({
-    id: localId,
-    name: user.name || "CareerUp Tester",
-    email: user.email,
-  });
-
-  return {
-    ...defaults,
-    ...user,
-    id: localId,
-    isLocalDemo: true,
-    demoWorkspace: true,
-  };
-}
-
+export const TOKEN_KEY = "careerup_access_token";
 export function getStoredUser() {
   try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    if (!raw) return null;
-
-    const parsed = JSON.parse(raw);
-    if (!parsed?.id || !parsed?.email) {
-      clearStoredUser();
+    const value = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+    if (!value?.id || !value?.email) return null;
+    if (value.authMode === "cloud" && !sessionStorage.getItem(TOKEN_KEY))
       return null;
-    }
-
-    const user = migrateToLocal(parsed);
-    if (!user) return null;
-
-    if (!isLocalDemoUser(parsed)) {
-      localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-      localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(user));
-    }
-
-    return user;
+    return {
+      ...value,
+      authMode: value.authMode || "local",
+      workspace: value.workspace || {
+        jobs: [],
+        milestones: {},
+        interviews: [],
+      },
+    };
   } catch {
-    clearStoredUser();
     return null;
   }
 }
-
 export function storeUser(user) {
-  if (!user?.id || !user?.email) return;
-  const localUser = migrateToLocal(user) || user;
-  localStorage.setItem(SESSION_KEY, JSON.stringify(localUser));
-  localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(localUser));
+  if (!user?.id || !user?.email)
+    throw new Error("The account could not be saved. Please sign in again.");
+  try {
+    if (user.authMode !== "cloud")
+      localStorage.setItem(`careerup_profile_${user.id}`, JSON.stringify(user));
+    localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+  } catch {
+    throw new Error(
+      "Your browser could not save this change. Allow site storage or free space, then try again.",
+    );
+  }
+  window.dispatchEvent(new Event("careerup:user-updated"));
 }
-
 export function updateStoredUser(patch) {
-  const current = getStoredUser();
-  if (!current) return null;
-  const next = { ...current, ...patch, isLocalDemo: true, demoWorkspace: true };
+  const user = getStoredUser();
+  if (!user) return null;
+  const next = { ...user, ...patch };
   storeUser(next);
   return next;
 }
-
 export function clearStoredUser() {
   localStorage.removeItem(SESSION_KEY);
-  localStorage.removeItem("careerup_cv_name");
+  sessionStorage.removeItem(TOKEN_KEY);
 }
-
 export function isProfileReady(user = getStoredUser()) {
-  if (!user) return false;
-  return Boolean(
-    user.name?.trim() &&
-    user.education?.trim() &&
-    Array.isArray(user.skills) && user.skills.length > 0 &&
-    Array.isArray(user.careerInterests) && user.careerInterests.length > 0 &&
-    user.careerGoal?.trim()
-  );
+  return getProfileCompletion(user) === 100;
 }
-
 export function getProfileCompletion(user = getStoredUser()) {
   if (!user) return 0;
   const checks = [
     Boolean(user.name?.trim()),
     Boolean(user.education?.trim()),
-    Array.isArray(user.skills) && user.skills.length > 0,
-    Array.isArray(user.careerInterests) && user.careerInterests.length > 0,
+    Boolean(user.skills?.length),
+    Boolean(user.careerInterests?.length),
     Boolean(user.careerGoal?.trim()),
   ];
   return Math.round((checks.filter(Boolean).length / checks.length) * 100);
 }
-
-export function isLoggedIn() {
-  return Boolean(getStoredUser());
-}
+export const isLoggedIn = () => Boolean(getStoredUser());

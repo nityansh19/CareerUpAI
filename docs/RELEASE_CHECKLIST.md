@@ -1,31 +1,21 @@
-# CareerUpAI Release Checklist
+# Release checks
 
-Use this checklist before publishing a significant update.
+## Device workspace release
 
-## Product
+- Regression tests, frontend lint, and production build pass.
+- Public content describes rule-based reviews and device storage accurately.
+- SPA deep links, responsive layouts, loading states, and keyboard controls work.
+- New accounts start empty; sample data is explicitly labelled.
+- Original PDFs and workspace backups can be downloaded separately.
+- Review text, application notes, and interview drafts survive a reload.
 
-- Confirm the main landing experience communicates the product clearly.
-- Verify login, dashboard navigation, and career-tool entry points.
-- Check empty, loading, error, and success states.
-- Remove unfinished labels or placeholder copy that should not ship.
+## Online account activation
 
-## Frontend
+- Hosted API reports version 2 with MongoDB connected.
+- `ALLOWED_ORIGINS` and `TRUST_PROXY` match production infrastructure.
+- Verify real hosted account ownership, persistence, resume downloads, and logout.
+- Decide and implement account recovery, email verification, retention, and deletion policy before a wider public online-account launch.
+- Enable `VITE_CLOUD_ACCOUNTS=true` only after the above checks; redeploy frontend.
+- Confirm device accounts stay available as a separate mode or document transfer instructions.
 
-- Run linting and a production build.
-- Test desktop and mobile layouts.
-- Check keyboard focus and obvious accessibility regressions.
-- Verify animations remain smooth and do not block interaction.
-
-## Backend
-
-- Confirm required environment variables are documented.
-- Verify API errors return useful status codes/messages.
-- Check database operations fail safely.
-- Confirm no secrets or local configuration files are committed.
-
-## Final review
-
-- Read the README as a new visitor.
-- Check broken links and outdated screenshots/copy.
-- Review the diff for accidental debug code.
-- Use a release-focused commit message and note important behavior changes.
+Payments, live job feeds, and generative AI are not enabled or advertised as functioning features in this release.
