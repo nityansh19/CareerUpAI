@@ -116,3 +116,14 @@ test("interview prompts depend on role and review does not invent a performance 
   assert.equal(review.score, undefined);
   assert.ok(review.method.includes("technical correctness"));
 });
+test("interview writing checks recognize debugging examples and use natural feedback", () => {
+  const review = reviewInterviewAnswer(
+    "In my project, the problem was lost changes. I traced the data flow and added validation. This fixed the issue and restored saved progress.",
+  );
+  assert.ok(review.checks.every((check) => check.found));
+  assert.ok(
+    reviewInterviewAnswer("A short answer.").suggestions.includes(
+      "Make your action explicit.",
+    ),
+  );
+});

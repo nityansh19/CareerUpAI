@@ -541,14 +541,14 @@ export function reviewInterviewAnswer(answer) {
       label: "Your action",
       found:
         /\b(i|my)\b/i.test(answer) &&
-        /\b(built|created|developed|implemented|analyzed|designed|tested|decided|helped|debugged|learned|improved)\b/i.test(
+        /\b(built|created|developed|implemented|analyzed|designed|tested|decided|helped|debugged|learned|improved|added|traced|checked|validated|investigated|documented|fixed|restored)\b/i.test(
           answer,
         ),
     },
     {
       label: "Result or learning",
       found:
-        /\b(result|outcome|improved|reduced|increased|learned|achieved|delivered|launched|saved)\b/i.test(
+        /\b(result|outcome|improved|reduced|increased|learned|achieved|delivered|launched|saved|fixed|restored|resolved)\b/i.test(
           answer,
         ),
     },
@@ -564,7 +564,10 @@ export function reviewInterviewAnswer(answer) {
         : []),
       ...checks
         .filter((c) => !c.found)
-        .map((c) => `Make the ${c.label.toLowerCase()} explicit.`),
+        .map(
+          (c) =>
+            `Make ${c.label === "Your action" ? "your action" : `the ${c.label.toLowerCase()}`} explicit.`,
+        ),
       ...(words > 350
         ? [
             "Shorten the answer to its most relevant details before practicing out loud.",
