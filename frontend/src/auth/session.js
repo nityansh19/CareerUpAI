@@ -1,3 +1,7 @@
+import {
+  buildCareerIntelligence,
+  CAREER_ENGINE_VERSION,
+} from "../../../shared/careerEngine.mjs";
 export const SESSION_KEY = "user";
 export const TOKEN_KEY = "careerup_access_token";
 export function getStoredUser() {
@@ -8,6 +12,14 @@ export function getStoredUser() {
       return null;
     return {
       ...value,
+      ...(value.cvFile === "local-demo"
+        ? { cvFile: "", cvOriginalName: "" }
+        : {}),
+      careerIntelligence:
+        value.careerIntelligence &&
+        value.careerIntelligence.engineVersion !== CAREER_ENGINE_VERSION
+          ? buildCareerIntelligence(value)
+          : value.careerIntelligence,
       authMode: value.authMode || "local",
       workspace: value.workspace || {
         jobs: [],

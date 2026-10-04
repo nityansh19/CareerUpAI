@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import * as module from "../src/auth/localAccount.js";
+import { getStoredUser } from "../src/auth/session.js";
 const store = new Map();
 globalThis.localStorage = {
   getItem: (k) => store.get(k) || null,
@@ -74,4 +75,35 @@ test("duplicate emails and short passwords are rejected", async () => {
     }),
     /8–128/,
   );
+});
+test("restored comparisons use current evidence and sample profiles do not invent PDF files", () => {
+  store.set(
+    "user",
+    JSON.stringify({
+      id: "legacy",
+      email: "legacy@example.com",
+      name: "Legacy User",
+      skills: [],
+      cvFile: "local-demo",
+      cvOriginalName: "old-sample.pdf",
+      resumeAnalysis: {
+        demoPreview: true,
+        detectedSkills: ["Python", "React"],
+      },
+      careerIntelligence: {
+        matches: [{ role: "Full Stack Developer", readinessScore: 94 }],
+      },
+    }),
+  );
+  const restored = getStoredUser();
+  assert.equal(restored.id, "legacy");
+  assert.deepEqual(restored.skills, []);
+  assert.equal(restored.careerIntelligence.matches.length, 12);
+  assert.equal(restored.careerIntelligence.primaryReadiness, 0);
+  assert.equal(restored.cvFile, "");
+  assert.equal(restored.cvOriginalName, "");
+  const sample = module.startDemoWorkspace();
+  assert.equal(sample.careerIntelligence.matches.length, 12);
+  assert.equal(sample.resumeAnalysis.demoPreview, true);
+  assert.equal(sample.cvFile, "");
 });

@@ -188,6 +188,7 @@ export function resolveRole(value) {
     null
   );
 }
+export const CAREER_ENGINE_VERSION = 2;
 export function buildCareerIntelligence(user) {
   const declared = new Set((user.skills || []).map(canonicalSkill));
   const detected = user.resumeAnalysis?.demoPreview
@@ -236,6 +237,7 @@ export function buildCareerIntelligence(user) {
       Number(b.role === target?.name) - Number(a.role === target?.name),
   );
   return {
+    engineVersion: CAREER_ENGINE_VERSION,
     targetRole: target?.name || "",
     primaryRole: matches[0].role,
     primaryReadiness: matches[0].readinessScore,
