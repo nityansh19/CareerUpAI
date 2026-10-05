@@ -4,16 +4,11 @@ import {
   TOKEN_KEY,
   clearStoredUser,
 } from "../auth/session.js";
-import {
-  createLocalDemoAccount,
-  authenticateLocalDemoAccount,
-} from "../auth/localAccount.js";
 export const API_URL = (import.meta.env?.VITE_API_URL || "").replace(
   /\/+$/,
   "",
 );
-export const CLOUD_ENABLED =
-  import.meta.env?.VITE_CLOUD_ACCOUNTS === "true" && Boolean(API_URL);
+export const CLOUD_ENABLED = Boolean(API_URL);
 export async function request(path, options = {}) {
   const token = sessionStorage.getItem(TOKEN_KEY);
   const headers = {
@@ -40,23 +35,47 @@ export async function request(path, options = {}) {
     window.dispatchEvent(new Event("careerup:session-expired"));
   }
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok)
-    throw new Error(
+  if (!response.ok) {
+    const error = new Error(
       payload.message || "The change could not be saved. Please try again.",
     );
+    error.code = payload.code || "";
+    error.status = response.status;
+    error.payload = payload;
+    throw error;
+  }
   return payload;
 }
 export async function authenticate(form, register = false) {
   if (!CLOUD_ENABLED)
-    return register
-      ? createLocalDemoAccount(form)
-      : authenticateLocalDemoAccount(form.email, form.password);
+    throw new Error(
+      "Online accounts are not configured yet. You can still explore the sample workspace.",
+    );
   const result = await request(
     `/api/users/${register ? "register" : "login"}`,
     { method: "POST", body: JSON.stringify(form) },
   );
+  if (result.verificationRequired) return result;
   sessionStorage.setItem(TOKEN_KEY, result.token);
   return { ...result.user, authMode: "cloud", isLocalDemo: false };
+}
+export async function verifyEmailAddress(email, code) {
+  if (!CLOUD_ENABLED)
+    throw new Error("Online accounts are not configured yet.");
+  const result = await request("/api/users/verify-email", {
+    method: "POST",
+    body: JSON.stringify({ email, code }),
+  });
+  sessionStorage.setItem(TOKEN_KEY, result.token);
+  return { ...result.user, authMode: "cloud", isLocalDemo: false };
+}
+export async function resendVerification(email) {
+  if (!CLOUD_ENABLED)
+    throw new Error("Online accounts are not configured yet.");
+  return request("/api/users/resend-verification", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
 }
 export async function persistUser(next) {
   if (next.authMode === "cloud") {
