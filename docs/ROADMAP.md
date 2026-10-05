@@ -6,18 +6,29 @@ Guided profiles, local PDF/text review, 12 role checklists, learning milestones 
 
 ## Current infrastructure migration
 
-The previous hosted persistence layer has been removed. The next activation phase is to connect CareerUpAI to Supabase Auth, Postgres, Row Level Security, and Storage, then restore hosted account persistence behind that architecture.
+CareerUpAI has removed its previous custom database and separately hosted API infrastructure.
+
+The next activation phase is a direct Supabase integration:
+
+- dedicated CareerUpAI Supabase project,
+- Supabase Auth,
+- Postgres user/workspace tables,
+- Row Level Security,
+- private Supabase Storage for resumes,
+- direct frontend integration using browser-safe project credentials.
 
 ## Activation work
 
-- Create or select the dedicated CareerUpAI Supabase project.
-- Define account-owned tables and storage layout.
-- Enable Row Level Security on every exposed user-data table.
-- Connect Supabase Auth with email confirmation.
-- Restore workspace sync and resume persistence.
-- Run hosted end-to-end checks before enabling cloud accounts.
-- Add account recovery, retention/deletion controls, and production monitoring.
+- Create or select a dedicated CareerUpAI Supabase project.
+- Define account-owned tables.
+- Enable RLS on all exposed user-data tables.
+- Connect signup/login and email confirmation.
+- Migrate local workspace operations to Supabase.
+- Add private resume storage.
+- Verify cross-account isolation.
+- Add password recovery, account deletion and retention controls.
+- Run hosted end-to-end checks before enabling real online accounts.
 
 ## Future capabilities
 
-Optional generative-AI analysis with clear consent and provider configuration; verified job sources; institution workspaces; premium subscriptions with real billing. None is represented as live today.
+Optional generative-AI analysis with clear consent and provider configuration; verified job sources; institution workspaces; premium subscriptions with real billing.
