@@ -1,36 +1,33 @@
 # CareerUpAI Development Guide
 
-## Purpose
-
-This guide keeps local development predictable across the frontend and backend.
-
 ## Repository layout
 
 - `frontend/` — React + Vite client
-- `backend/` — Express API shell prepared for Supabase integration
-- `shared/` — career and resume rules shared across runtimes
-- `docs/` — project and development notes
+- `shared/` — career and resume rules shared by the product
+- `docs/` — project and engineering notes
 
 ## Local workflow
 
-1. Install frontend and backend dependencies.
-2. Start the backend in development mode.
-3. Start the frontend with Vite.
-4. Verify public pages, device/sample workspace behavior, and career tools before committing.
-5. Keep hosted account mode disabled until the Supabase integration passes its security and persistence checks.
+1. Install frontend dependencies.
+2. Start the Vite frontend.
+3. Verify public pages, authentication UI, device/sample workspace behavior, and career tools.
+4. Keep real hosted accounts disabled until the dedicated Supabase integration passes its security and persistence checks.
 
 ## Development principles
 
-- Keep UI state separate from API/data state where practical.
-- Prefer small reusable components over expanding a single large page file.
+- Keep UI state separate from data state where practical.
+- Prefer small reusable components.
 - Keep demo/fallback behavior clearly labelled.
 - Never commit private keys, tokens, or production credentials.
+- Only browser-safe Supabase publishable credentials belong in Vite environment variables.
 - Treat loading, empty, error, and success states as part of every feature.
 
 ## Before committing
 
-- Run backend and frontend tests.
-- Run the frontend linter.
-- Run the frontend production build.
-- Confirm no debug logs or temporary secrets were added.
-- Use a focused commit message describing one logical change.
+```bash
+npm test --prefix frontend
+npm run lint --prefix frontend
+npm run build --prefix frontend
+```
+
+Also confirm no debug logs or temporary secrets were added.
