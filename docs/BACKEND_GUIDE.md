@@ -1,23 +1,29 @@
 # Backend Guide
 
-CareerUpAI uses Express with MongoDB/Mongoose for server-side functionality.
+CareerUpAI uses Express for server-side validation and protected operations.
 
-## Responsibilities
+## Current migration state
 
-The backend should own validation, persistence, sensitive logic and any data that must not be trusted to the browser.
+The legacy persistence and custom account-session layer has been removed. Account routes are intentionally migration-gated until Supabase is connected.
+
+## Target responsibilities
+
+The Supabase-backed architecture will use:
+
+- Supabase Auth for identity and email/password sessions.
+- Postgres for account-owned workspace data.
+- Row Level Security for per-user authorization.
+- Supabase Storage for original resume files.
+- Express only for operations that should remain server-side, such as controlled document analysis or other sensitive logic.
 
 ## Route design
 
 - Keep endpoints resource-oriented and predictable.
-- Validate input before database operations.
+- Validate input before persistence operations.
 - Return consistent status codes and response shapes.
-- Avoid exposing internal stack traces or database details.
+- Avoid exposing internal stack traces or provider details.
 - Keep route handlers thin as complexity grows.
 
-## Database access
+## Security
 
-Centralize reusable queries and avoid repeating business rules across multiple routes. Add indexes only for query patterns that actually need them.
-
-## Error handling
-
-Operational errors should produce useful client responses while unexpected errors should be logged server-side and returned as generic failures.
+Authorization must rely on authenticated user identity and ownership checks. Client-supplied user IDs are never sufficient authorization.
