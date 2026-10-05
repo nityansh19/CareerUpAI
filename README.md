@@ -16,11 +16,11 @@ A connected career workspace for students and early-career builders: review your
 
 Reviews use transparent rules, not a generative AI service. Resume scores are not ATS pass rates; career percentages describe skill-checklist coverage, not hiring probability. The app does not fetch live job listings or submit applications. Current core tools are free; premium checkout is not active.
 
-## Data modes
+## Account modes
 
-**Device mode is the default.** Profiles, accounts, learning progress, applications, and interview history stay in this browser. PDF files use IndexedDB. Device passwords restrict the interface but do not encrypt browser data or secure a shared browser profile. Export backups before clearing site storage.
+**Login and Create Account use verified online accounts.** The Express API hashes passwords, sends a 6-digit email verification code, creates sessions only after the email is verified, enforces account ownership, stores workspaces in MongoDB, and supports revocable sessions.
 
-**Online accounts are implemented behind `VITE_CLOUD_ACCOUNTS=true`.** The Express API supports hashed passwords, revocable sessions, authenticated account ownership, MongoDB-backed workspaces, stored PDFs, and conflict detection. Enable the flag only after the hosted API reports `/health` version `2` and a connected database, and the online flow is verified. Device and online accounts are separate; use Settings exports to transfer workspace data.
+**The sample workspace is separate.** It remains available without an account for product exploration, but it is not treated as a real login and does not bypass email verification.
 
 ## Stack
 
@@ -34,7 +34,7 @@ npm ci --prefix backend
 npm run dev --prefix frontend
 ```
 
-For the API, set `MONGODB_URI` in the hosting environment or shell, then run:
+For the API, set `MONGODB_URI`, `RESEND_API_KEY`, and `EMAIL_FROM` in the hosting environment or shell, then run:
 
 ```bash
 npm start --prefix backend
