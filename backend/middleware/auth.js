@@ -21,6 +21,13 @@ module.exports = async (req, res, next) => {
       return res
         .status(401)
         .json({ message: "The account is no longer available." });
+    if (!user.emailVerified) {
+      await session.deleteOne();
+      return res.status(401).json({
+        code: "EMAIL_NOT_VERIFIED",
+        message: "Verify your email before accessing your workspace.",
+      });
+    }
     if (req.params.id && req.params.id !== String(user._id))
       return res
         .status(403)
