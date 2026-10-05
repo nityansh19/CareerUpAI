@@ -1,3 +1,4 @@
+process.env.NODE_ENV = "test";
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const express = require("express");
@@ -18,6 +19,7 @@ const owner = {
   _id: ownerId,
   name: "API Test",
   email: "api-test@example.com",
+  emailVerified: true,
   skills: ["Python"],
   careerGoal: "Python Developer",
   workspace: { jobs: [], milestones: {}, interviews: [] },
@@ -135,16 +137,24 @@ test("PDF route rejects non-PDF bytes and reads real PDF text", async (t) => {
   assert.equal(result.body.user.resumeData, undefined);
 });
 
-test("cloud registration, login, protected reads, and logout use revocable hashed sessions", async (t) => {
+test("cloud registration requires verified email before login or protected access", async (t) => {
   const { tokenHash } = require("../services/auth");
   const records = new Map();
-  let user;
-  t.mock.method(User, "exists", async () => false);
+  let user = null;
+
   t.mock.method(User, "create", async (value) => {
-    user = { ...owner, ...value, _id: ownerId, save: async () => {} };
+    user = {
+      ...owner,
+      ...value,
+      _id: ownerId,
+      emailVerified: Boolean(value.emailVerified),
+      save: async () => user,
+    };
     return user;
   });
-  t.mock.method(User, "findOne", () => ({ select: async () => user }));
+  t.mock.method(User, "findOne", () => ({
+    select: async () => user,
+  }));
   t.mock.method(User, "findById", async () => user);
   t.mock.method(Session, "create", async (value) => {
     const session = {
@@ -159,6 +169,7 @@ test("cloud registration, login, protected reads, and logout use revocable hashe
     "findOne",
     async (query) => records.get(query.tokenHash) || null,
   );
+
   const registered = await request(app)
     .post("/api/users/register")
     .send({
@@ -166,15 +177,39 @@ test("cloud registration, login, protected reads, and logout use revocable hashe
       email: "CLOUD@example.com",
       password: " password with spaces ",
     });
-  assert.equal(registered.status, 201);
-  assert.equal(registered.body.user.email, "cloud@example.com");
-  assert.equal(registered.body.user.password, undefined);
+  assert.equal(registered.status, 202);
+  assert.equal(registered.body.verificationRequired, true);
+  assert.equal(registered.body.email, "cloud@example.com");
+  assert.equal(registered.body.token, undefined);
+  assert.equal(user.emailVerified, false);
   assert.ok(user.password.startsWith("scrypt:"));
-  assert.ok(records.has(tokenHash(registered.body.token)));
+  assert.ok(user.emailVerificationCode.startsWith("scrypt:"));
+
+  const unverifiedLogin = await request(app)
+    .post("/api/users/login")
+    .send({ email: "cloud@example.com", password: " password with spaces " });
+  assert.equal(unverifiedLogin.status, 403);
+  assert.equal(unverifiedLogin.body.code, "EMAIL_NOT_VERIFIED");
+
+  const wrongCode = await request(app)
+    .post("/api/users/verify-email")
+    .send({ email: "cloud@example.com", code: "000000" });
+  assert.equal(wrongCode.status, 400);
+  assert.equal(user.emailVerified, false);
+
+  const verified = await request(app)
+    .post("/api/users/verify-email")
+    .send({ email: "cloud@example.com", code: "123456" });
+  assert.equal(verified.status, 200);
+  assert.equal(verified.body.user.emailVerified, true);
+  assert.equal(verified.body.user.password, undefined);
+  assert.ok(records.has(tokenHash(verified.body.token)));
+
   const wrong = await request(app)
     .post("/api/users/login")
     .send({ email: "cloud@example.com", password: "password with spaces" });
   assert.equal(wrong.status, 401);
+
   const login = await request(app)
     .post("/api/users/login")
     .send({ email: "cloud@example.com", password: " password with spaces " });
