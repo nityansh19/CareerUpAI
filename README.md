@@ -16,7 +16,7 @@ A connected career workspace for students and early-career builders: review your
 
 ## Architecture
 
-CareerUpAI no longer uses a separately hosted Express/Render backend.
+CareerUpAI no longer uses a separately hosted custom backend.
 
 The target hosted architecture is:
 
