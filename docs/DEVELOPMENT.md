@@ -7,15 +7,17 @@ This guide keeps local development predictable across the frontend and backend.
 ## Repository layout
 
 - `frontend/` — React + Vite client
-- `backend/` — Express API and MongoDB integration
+- `backend/` — Express API shell prepared for Supabase integration
+- `shared/` — career and resume rules shared across runtimes
 - `docs/` — project and development notes
 
 ## Local workflow
 
-1. Install dependencies in the repository root and `frontend/`.
+1. Install frontend and backend dependencies.
 2. Start the backend in development mode.
 3. Start the frontend with Vite.
-4. Verify the main public pages, authentication flow, dashboard, and career tools before committing.
+4. Verify public pages, device/sample workspace behavior, and career tools before committing.
+5. Keep hosted account mode disabled until the Supabase integration passes its security and persistence checks.
 
 ## Development principles
 
@@ -27,8 +29,8 @@ This guide keeps local development predictable across the frontend and backend.
 
 ## Before committing
 
+- Run backend and frontend tests.
 - Run the frontend linter.
 - Run the frontend production build.
-- Manually check navigation and the primary user flow.
 - Confirm no debug logs or temporary secrets were added.
 - Use a focused commit message describing one logical change.
