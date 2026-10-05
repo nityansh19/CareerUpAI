@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { clearStoredUser, getStoredUser } from "../auth/session";
 import "./workspace.css";
-import { request } from "../lib/workspace";
 import MotionRegion from "../components/MotionRegion";
 
 const NAV = [
@@ -265,9 +264,7 @@ export default function WorkspaceShell({ children, user }) {
     if (paletteOpen) searchRef.current?.focus();
   }, [paletteOpen]);
 
-  const logout = async () => {
-    if (account?.authMode === "cloud")
-      await request("/api/users/logout", { method: "POST" }).catch(() => {});
+  const logout = () => {
     clearStoredUser();
     navigate("/", { replace: true });
   };
@@ -347,11 +344,9 @@ export default function WorkspaceShell({ children, user }) {
             <span className="ws-account-name">
               <strong>{account?.name || "Your account"}</strong>
               <small>
-                {account?.authMode === "cloud"
-                  ? "Synced account"
-                  : account?.authMode === "demo"
-                    ? "Sample workspace"
-                    : "Device workspace"}
+                {account?.authMode === "demo"
+                  ? "Sample workspace"
+                  : "Device workspace"}
               </small>
             </span>
             <button onClick={logout} title="Sign out" aria-label="Sign out">

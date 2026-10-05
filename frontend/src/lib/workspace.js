@@ -1,92 +1,24 @@
-import {
-  getStoredUser,
-  storeUser,
-  TOKEN_KEY,
-  clearStoredUser,
-} from "../auth/session.js";
+import { storeUser } from "../auth/session.js";
 import {
   createLocalDemoAccount,
   authenticateLocalDemoAccount,
 } from "../auth/localAccount.js";
-export const API_URL = (import.meta.env?.VITE_API_URL || "").replace(
-  /\/+$/,
-  "",
-);
-export const CLOUD_ENABLED =
-  import.meta.env?.VITE_CLOUD_ACCOUNTS === "true" && Boolean(API_URL);
-export async function request(path, options = {}) {
-  const token = sessionStorage.getItem(TOKEN_KEY);
-  const headers = {
-    ...(options.body instanceof FormData
-      ? {}
-      : { "Content-Type": "application/json" }),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...options.headers,
-  };
-  let response;
-  try {
-    response = await fetch(`${API_URL}${path}`, {
-      ...options,
-      headers,
-      signal: AbortSignal.timeout(20000),
-    });
-  } catch {
-    throw new Error(
-      "The online service could not be reached. Your saved device data is still available. Please try again shortly.",
-    );
-  }
-  if (response.status === 401 && token) {
-    clearStoredUser();
-    window.dispatchEvent(new Event("careerup:session-expired"));
-  }
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok)
-    throw new Error(
-      payload.message || "The change could not be saved. Please try again.",
-    );
-  return payload;
-}
+
+export const CLOUD_ENABLED = false;
+
 export async function authenticate(form, register = false) {
-  if (!CLOUD_ENABLED)
-    return register
-      ? createLocalDemoAccount(form)
-      : authenticateLocalDemoAccount(form.email, form.password);
-  const result = await request(
-    `/api/users/${register ? "register" : "login"}`,
-    { method: "POST", body: JSON.stringify(form) },
-  );
-  sessionStorage.setItem(TOKEN_KEY, result.token);
-  return { ...result.user, authMode: "cloud", isLocalDemo: false };
+  return register
+    ? createLocalDemoAccount(form)
+    : authenticateLocalDemoAccount(form.email, form.password);
 }
+
 export async function persistUser(next) {
-  if (next.authMode === "cloud") {
-    const { user } = await request("/api/users/workspace", {
-      method: "PUT",
-      body: JSON.stringify({
-        name: next.name,
-        education: next.education,
-        careerGoal: next.careerGoal,
-        skills: next.skills,
-        careerInterests: next.careerInterests,
-        workspace: next.workspace,
-        expectedVersion: next.workspaceVersion || 0,
-      }),
-    });
-    const saved = { ...user, authMode: "cloud", isLocalDemo: false };
-    storeUser(saved);
-    return saved;
-  }
-  storeUser(next);
-  return next;
+  const saved =
+    next.authMode === "demo" ? next : { ...next, authMode: "local" };
+  storeUser(saved);
+  return saved;
 }
-export async function refreshCloudUser() {
-  const current = getStoredUser();
-  if (current?.authMode !== "cloud") return current;
-  const { user } = await request("/api/users/me");
-  const next = { ...user, authMode: "cloud" };
-  storeUser(next);
-  return next;
-}
+
 export function downloadFile(name, contents, type = "application/json") {
   const blob =
     contents instanceof Blob ? contents : new Blob([contents], { type });
@@ -99,11 +31,13 @@ export function downloadFile(name, contents, type = "application/json") {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
 export function csvCell(value) {
   const text = String(value ?? "");
   const safe = /^[\s]*[=+\-@\t\r]/.test(text) ? `'${text}` : text;
   return `"${safe.replace(/"/g, '""')}"`;
 }
+
 export function getJobs(user) {
   let values = user.workspace?.jobs;
   if (!values?.length)
@@ -127,6 +61,7 @@ export function getJobs(user) {
       )
     : [];
 }
+
 export function localDate() {
   const date = new Date();
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -147,6 +82,7 @@ export function backup(user) {
     workspace: { ...user.workspace, jobs: getJobs(user) },
   };
 }
+
 export function validateBackup(data) {
   if (
     data?.format !== "careerup-workspace" ||

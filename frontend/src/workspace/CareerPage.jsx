@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { getStoredUser, storeUser } from "../auth/session";
 import { buildCareerIntelligence } from "../../../shared/careerEngine.mjs";
-import { persistUser, request } from "../lib/workspace";
+import { persistUser } from "../lib/workspace";
 import { DemoBanner, EmptyState, Icon, PageHeader } from "./WorkspaceShell";
 const List = ({ items = [] }) => (
   <ul className="ws-list">
@@ -27,15 +27,10 @@ export default function CareerPage() {
         throw new Error(
           "Add your real skills in Profile before comparing career paths.",
         );
-      let next;
-      if (user.authMode === "cloud") {
-        const result = await request(
-          `/api/users/career-intelligence/${user.id}`,
-          { method: "POST" },
-        );
-        next = { ...result.user, authMode: "cloud" };
-      } else
-        next = { ...user, careerIntelligence: buildCareerIntelligence(user) };
+      const next = {
+        ...user,
+        careerIntelligence: buildCareerIntelligence(user),
+      };
       storeUser(next);
       setUser(next);
       setSelected(0);

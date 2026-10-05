@@ -6,7 +6,6 @@ import {
   backup,
   downloadFile,
   persistUser,
-  request,
   validateBackup,
 } from "../lib/workspace";
 import Dialog from "../components/Dialog";
@@ -27,9 +26,7 @@ export default function SettingsPage() {
     [busy, setBusy] = useState(false);
   const input = useRef(null),
     navigate = useNavigate();
-  const signout = async () => {
-    if (user.authMode === "cloud")
-      await request("/api/users/logout", { method: "POST" }).catch(() => {});
+  const signout = () => {
     clearStoredUser();
     navigate("/", { replace: true });
   };
@@ -109,11 +106,9 @@ export default function SettingsPage() {
             <div>
               <strong>Storage</strong>
               <p>
-                {user.authMode === "cloud"
-                  ? "Online account · syncs between signed-in devices"
-                  : user.authMode === "demo"
-                    ? "Sample workspace · saved on this device"
-                    : "Device account · saved in this browser"}
+                {user.authMode === "demo"
+                  ? "Sample workspace · saved on this device"
+                  : "Device account · saved in this browser"}
               </p>
             </div>
           </div>

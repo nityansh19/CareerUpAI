@@ -1,24 +1,22 @@
 # Project Structure
 
-CareerUpAI is split into a React/Vite frontend, an Express API shell, shared career logic, and documentation.
+CareerUpAI is a frontend application with shared product intelligence and a Supabase data platform.
 
 ```text
 CareerUpAI/
 ├── frontend/        React application, routes, UI and client-side flows
-├── backend/         Express API shell, validation and future Supabase server operations
 ├── shared/          Shared career and resume rules
 ├── docs/            Product documentation and engineering guides
-├── README.md        Product overview and quick start
-└── package.json     Root scripts
+└── README.md        Product overview and quick start
 ```
 
 ## Frontend
 
-Keep page-level flows, reusable UI, authentication helpers and feature-specific modules separated.
+The React/Vite application owns page-level flows, reusable UI, authentication integration, and feature-specific modules.
 
-## Backend
+## Data platform
 
-Keep HTTP handling, validation and privileged server logic separate. Supabase-backed persistence will be introduced behind explicit service modules rather than mixed directly into route handlers.
+Supabase will provide authentication, Postgres persistence, Row Level Security, and private file storage. There is no separately hosted custom API server in the current architecture.
 
 ## Documentation
 

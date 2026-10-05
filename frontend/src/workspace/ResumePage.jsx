@@ -6,7 +6,7 @@ import {
   buildCareerIntelligence,
 } from "../../../shared/careerEngine.mjs";
 import { extractPdf } from "../lib/pdf";
-import { downloadFile, request } from "../lib/workspace";
+import { downloadFile } from "../lib/workspace";
 import { readResume, saveResume } from "./browserStorage";
 import { DemoBanner, Icon, PageHeader } from "./WorkspaceShell";
 const List = ({ items = [] }) => (
@@ -36,35 +36,23 @@ export default function ResumePage() {
     setError("");
     setMessage("");
     try {
-      const parsed = await extractPdf(file); // Reject invalid/scanned documents before any upload.
-      if (user.authMode === "cloud") {
-        const body = new FormData();
-        body.append("cv", file);
-        const result = await request(`/api/users/analyze-resume/${user.id}`, {
-          method: "POST",
-          body,
-        });
-        adopt({ ...result.user, authMode: "cloud" });
-      } else {
-        const report = analyzeResumeText(parsed.text, user, {
-          pages: parsed.pages,
-          source: "pdf",
-          fileName: file.name,
-        });
-        await saveResume(user.id, file);
-        const next = {
-          ...user,
-          cvOriginalName: file.name,
-          cvFile: "device-pdf",
-          resumeAnalysis: report,
-        };
-        next.careerIntelligence = buildCareerIntelligence(next);
-        adopt(next);
-      }
+      const parsed = await extractPdf(file);
+      const report = analyzeResumeText(parsed.text, user, {
+        pages: parsed.pages,
+        source: "pdf",
+        fileName: file.name,
+      });
+      await saveResume(user.id, file);
+      const next = {
+        ...user,
+        cvOriginalName: file.name,
+        cvFile: "device-pdf",
+        resumeAnalysis: report,
+      };
+      next.careerIntelligence = buildCareerIntelligence(next);
+      adopt(next);
       setMessage(
-        user.authMode === "cloud"
-          ? "Resume and report saved to your account."
-          : "PDF read successfully. Your report and original file are saved on this device.",
+        "PDF read successfully. Your report and original file are saved on this device.",
       );
     } catch (e) {
       setError(
@@ -81,20 +69,12 @@ export default function ResumePage() {
     setError("");
     setMessage("");
     try {
-      if (user.authMode === "cloud") {
-        const result = await request("/api/users/analyze-text", {
-          method: "POST",
-          body: JSON.stringify({ text }),
-        });
-        adopt({ ...result.user, authMode: "cloud" });
-      } else {
-        const next = {
-          ...user,
-          resumeAnalysis: analyzeResumeText(text, user, { source: "text" }),
-        };
-        next.careerIntelligence = buildCareerIntelligence(next);
-        adopt(next);
-      }
+      const next = {
+        ...user,
+        resumeAnalysis: analyzeResumeText(text, user, { source: "text" }),
+      };
+      next.careerIntelligence = buildCareerIntelligence(next);
+      adopt(next);
       setMessage(
         "Resume text reviewed. The report is based on the text you provided.",
       );
@@ -107,29 +87,12 @@ export default function ResumePage() {
   const download = async () => {
     setError("");
     try {
-      if (user.authMode === "cloud") {
-        const token = sessionStorage.getItem("careerup_access_token");
-        const response = await fetch(
-          `${(import.meta.env.VITE_API_URL || "").replace(/\/+$/, "")}/api/users/resume`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-            signal: AbortSignal.timeout(20000),
-          },
+      const file = await readResume(user.id);
+      if (!file)
+        throw new Error(
+          "Upload a PDF to save an original file on this device.",
         );
-        if (!response.ok)
-          throw new Error("The saved PDF could not be downloaded.");
-        downloadFile(
-          user.cvOriginalName || "resume.pdf",
-          await response.blob(),
-        );
-      } else {
-        const file = await readResume(user.id);
-        if (!file)
-          throw new Error(
-            "Upload a PDF to save an original file on this device.",
-          );
-        downloadFile(file.name || "resume.pdf", file);
-      }
+      downloadFile(file.name || "resume.pdf", file);
     } catch (e) {
       setError(e.message);
     }
@@ -244,9 +207,7 @@ export default function ResumePage() {
           <p className="ws-muted" style={{ marginTop: 16 }}>
             Reviewing for{" "}
             <Link to="/profile">{user.careerGoal || "a general profile"}</Link>.{" "}
-            {user.authMode === "cloud"
-              ? "Uploaded PDFs are saved to your account."
-              : "PDFs and pasted text are processed on this device."}
+            PDFs and pasted text are processed on this device.
           </p>
         </section>
         <section className="ws-card ws-panel">
