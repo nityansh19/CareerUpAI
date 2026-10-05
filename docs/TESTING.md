@@ -9,10 +9,17 @@ npm run lint --prefix frontend
 npm run build --prefix frontend
 ```
 
-Frontend tests cover isolated device accounts, strict login, empty initial profiles, skill aliases and evidence, scoring, learning plans, interview writing checks, backup validation, and safe CSV output. Backend tests cover password hashing, ownership checks, validation, credential-free serialization, stale write rejection, and parsing a real PDF fixture.
+Frontend tests cover isolated device accounts, strict login behavior, empty initial profiles, skill aliases and evidence, scoring, learning plans, interview writing checks, backup validation, and safe CSV output.
 
-API contract tests exercise the actual Express routes with explicitly mocked database model methods. They do not verify a live MongoDB connection, hosted persistence, or cross-device sync. The fixture contains synthetic data only.
+Backend tests currently verify:
 
-Browser release journey: public landing → sign-in page → explicit sample workspace → profile → career comparison → learning milestone → resume text review → save/edit an opportunity → interview session → backup export. Also verify a fresh account's onboarding, two separate device accounts, PDF upload/download, reload persistence, mobile navigation, and quick actions.
+- the API starts without a legacy database connection,
+- health reports the Supabase migration state,
+- legacy hosted account routes are migration-gated,
+- workspace validation still rejects unsafe or malformed input.
 
-Before online activation, independently verify registration, wrong-password rejection, reload/new-tab sign-in, record ownership rejection, profile and job persistence across devices, resume upload/download, stale update conflict, and session revocation against the deployed API with a disposable test account.
+## Browser checks during migration
+
+Verify public landing → sign-in page → explicit sample/device workspace → profile → career comparison → learning milestone → resume text review → application tracker → interview session → backup export.
+
+Hosted account tests will be expanded when Supabase is connected. Before cloud activation, verify email confirmation, wrong-password rejection, session refresh/sign-out, RLS ownership isolation, profile/workspace persistence across devices, private resume upload/download, and unauthorized-row rejection.
