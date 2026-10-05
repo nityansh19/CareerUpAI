@@ -47,9 +47,9 @@ app.get("/health", (req, res) => {
     .json({
       status: connected ? "ok" : "degraded",
       database: connected ? "connected" : "unavailable",
-      version: 2,
+      version: 3,
       capabilities: connected
-        ? ["accounts", "workspace-sync", "resume-text-review"]
+        ? ["verified-accounts", "workspace-sync", "resume-text-review"]
         : [],
     });
 });
@@ -78,7 +78,7 @@ app.use(
   require("./routes/userRoutes"),
 );
 app.get("/", (req, res) =>
-  res.json({ service: "CareerUpAI", version: 2, health: "/health" }),
+  res.json({ service: "CareerUpAI", version: 3, health: "/health" }),
 );
 app.use((req, res) =>
   res.status(404).json({ message: "This endpoint does not exist." }),
