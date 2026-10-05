@@ -9,13 +9,23 @@
 - Original PDFs and workspace backups can be downloaded separately.
 - Review text, application notes, and interview drafts survive a reload.
 
-## Online account activation
+## Supabase account activation
 
-- Hosted API reports version 2 with MongoDB connected.
-- `ALLOWED_ORIGINS` and `TRUST_PROXY` match production infrastructure.
-- Verify real hosted account ownership, persistence, resume downloads, and logout.
-- Decide and implement account recovery, email verification, retention, and deletion policy before a wider public online-account launch.
-- Enable `VITE_CLOUD_ACCOUNTS=true` only after the above checks; redeploy frontend.
-- Confirm device accounts stay available as a separate mode or document transfer instructions.
+Do not enable hosted accounts until all of these pass:
+
+- A dedicated CareerUpAI Supabase project is selected and documented.
+- Supabase Auth email/password sign-up and email confirmation work.
+- User-data tables exist with explicit grants where required.
+- Row Level Security is enabled on every exposed table.
+- RLS policies restrict reads/inserts/updates/deletes to the authenticated owner.
+- Resume Storage is private and owner-scoped.
+- The frontend uses only the project URL and publishable key.
+- Secret/service keys exist only in trusted server environments.
+- Cross-account access attempts are rejected.
+- Persistence works across reloads and devices.
+- Sign-out and expired-session behavior are verified.
+- Backend and frontend tests, lint and production builds pass.
+
+Keep `VITE_CLOUD_ACCOUNTS=false` until this checklist is complete.
 
 Payments, live job feeds, and generative AI are not enabled or advertised as functioning features in this release.

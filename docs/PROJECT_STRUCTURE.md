@@ -1,23 +1,24 @@
 # Project Structure
 
-CareerUpAI is split into a React/Vite frontend and an Express/MongoDB backend.
+CareerUpAI is split into a React/Vite frontend, an Express API shell, shared career logic, and documentation.
 
 ```text
 CareerUpAI/
 ├── frontend/        React application, routes, UI and client-side flows
-├── backend/         Express API, database access and server logic
-├── docs/            Project documentation and engineering guides
+├── backend/         Express API shell, validation and future Supabase server operations
+├── shared/          Shared career and resume rules
+├── docs/            Product documentation and engineering guides
 ├── README.md        Product overview and quick start
-└── package.json     Root backend scripts and dependencies
+└── package.json     Root scripts
 ```
 
 ## Frontend
 
-Keep page-level flows, reusable UI, authentication helpers and feature-specific modules separated. Avoid putting unrelated product logic into the main application component.
+Keep page-level flows, reusable UI, authentication helpers and feature-specific modules separated.
 
 ## Backend
 
-Keep HTTP handling, validation, database logic and reusable services separate as the API grows. Route handlers should stay small enough to understand without tracing unrelated concerns.
+Keep HTTP handling, validation and privileged server logic separate. Supabase-backed persistence will be introduced behind explicit service modules rather than mixed directly into route handlers.
 
 ## Documentation
 
