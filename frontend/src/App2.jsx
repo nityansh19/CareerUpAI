@@ -9,7 +9,6 @@ import {
 } from "react-router-dom";
 import WorkspaceShell from "./workspace/WorkspaceShell";
 import { getStoredUser } from "./auth/session";
-import { refreshCloudUser } from "./lib/workspace";
 import AppBoundary from "./components/AppBoundary";
 import PerformanceStyles from "./performance/PerformanceStyles";
 const Home3D = lazy(() => import("./Home3D"));
@@ -58,11 +57,7 @@ function RouteEffects() {
 }
 function WorkspaceRoute({ children }) {
   const location = useLocation();
-  const [user, setUser] = useState(() => getStoredUser()),
-    [loading, setLoading] = useState(
-      () => getStoredUser()?.authMode === "cloud",
-    ),
-    [error, setError] = useState("");
+  const [user, setUser] = useState(() => getStoredUser());
   useEffect(() => {
     const refresh = () => setUser(getStoredUser());
     window.addEventListener("careerup:user-updated", refresh);
@@ -72,35 +67,9 @@ function WorkspaceRoute({ children }) {
       window.removeEventListener("storage", refresh);
     };
   }, []);
-  useEffect(() => {
-    let active = true;
-    if (user?.authMode === "cloud")
-      refreshCloudUser()
-        .then((next) => {
-          if (active) setUser(next);
-        })
-        .catch((e) => {
-          if (active) setError(e.message);
-        })
-        .finally(() => {
-          if (active) setLoading(false);
-        });
-    return () => {
-      active = false;
-    };
-  }, [user?.authMode]);
   if (!user)
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
-  return (
-    <WorkspaceShell user={user}>
-      {error && (
-        <p className="ws-message" role="alert">
-          {error}
-        </p>
-      )}
-      {loading ? <Loading /> : children}
-    </WorkspaceShell>
-  );
+  return <WorkspaceShell user={user}>{children}</WorkspaceShell>;
 }
 function Guest({ children }) {
   return getStoredUser() ? <Navigate to="/dashboard" replace /> : children;
