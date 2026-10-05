@@ -1,25 +1,29 @@
 # Environment setup
 
-## Frontend (Vercel root: `frontend`)
+## Frontend
+
+CareerUpAI is a React/Vite application deployed on Vercel.
+
+The dedicated CareerUpAI Supabase project will provide the hosted data/auth layer directly.
 
 | Variable | Purpose |
 | --- | --- |
-| `VITE_API_URL` | HTTPS base URL of the CareerUpAI API, without a trailing slash. |
-| `VITE_CLOUD_ACCOUNTS` | Keep `false` until the Supabase account migration is complete and verified. |
+| `VITE_SUPABASE_URL` | Public URL for the CareerUpAI Supabase project. |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Public Supabase key intended for browser use. |
 
-Client variables are public build-time configuration. Never put secret database credentials in `VITE_` variables.
+These variables are public build-time configuration. Never put a Supabase secret/service key in a `VITE_` variable.
 
-## API
+## Current migration state
 
-| Variable | Purpose |
-| --- | --- |
-| `PORT` | Host-supplied listening port; defaults to `5000`. |
-| `NODE_ENV` | Use `production` on the hosted API. |
-| `ALLOWED_ORIGINS` | Comma-separated frontend origins, including any preview URL used for online testing. |
-| `TRUST_PROXY` | Number of trusted reverse proxies. Defaults to `1` on Render and `0` elsewhere. |
+The previous external API host has been removed from the repository and the legacy `VITE_API_URL` connection is no longer used by the application.
 
-Install with `npm ci --prefix backend` and start with `npm start --prefix backend`.
+Until Supabase is connected, the app keeps account/workspace data on the device.
 
-During the migration, `GET /health` reports `version: 3` and `database: supabase-migration-pending`. Account routes intentionally return `SUPABASE_MIGRATION_PENDING` until the Supabase schema and Auth integration are connected.
+## Local development
 
-Supabase URL and publishable-key variables will be added in the connection step. Secret or service-level keys must never be exposed through Vite.
+```bash
+npm ci --prefix frontend
+npm run dev --prefix frontend
+```
+
+Copy `frontend/.env.example` to your local environment when the Supabase project is ready and fill in the project URL and publishable key.
